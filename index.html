@@ -208,7 +208,7 @@ function render(){
     h+=`</div><details><summary>全候補を見る（${r.all.length}${few.length?'＋少'+few.length:''}）</summary><table>${r.all.map(x=>`<tr><td>${icons(x.id)}</td><td>${itemName(x.id)}</td><td class="n ${x.delta>=0?'up':'down'}">${x.id===s.id?'基準':fmt(x.delta)}</td><td class="n">${x.pr.toFixed(1)}%</td><td class="n">${x.n.toLocaleString()}</td></tr>`).join('')}</table>${few.length?`<div class="tag" style="margin-top:8px">試合数が少ないもの（補正後／生の勝率）</div><table>${few.map(x=>`<tr><td>${icons(x.id)}</td><td>${itemName(x.id)}</td><td class="n ${x.delta>=0?'up':'down'}">${fmt(x.delta)}</td><td class="n">生 ${x.wr.toFixed(0)}%</td><td class="n">${x.n}</td></tr>`).join('')}</table>`:''}</details></section>`;
   }
   $('out').innerHTML=h;
-  renderCompare(P);
+  renderCompare(P);renderHist();
 }
 function vsAvg(k,id,P){const R=evaluate(k,P,1);const x=R?.list.find(y=>y.id===id);if(!x)return null;const M=MODEL[k];return {d:(sig(M.gb+x.score)-sig(M.gb))*100,n:x.n,conf:x.conf}}
 function extraBox(P){
@@ -229,6 +229,24 @@ function extraBox(P){
 }
 function loadTips(){try{return localStorage.getItem('lb_tips_'+CUR)??DEFAULT_TIPS[CUR]}catch(e){return DEFAULT_TIPS[CUR]}}
 document.addEventListener('click',e=>{if(e.target.id==='editTips'){const v=prompt('コツ（1行に1つ。[重傷] で始めた行は重傷が要る敵がいるときに光ります）',loadTips());if(v!==null){try{localStorage.setItem('lb_tips_'+CUR,v)}catch(_){}render()}}});
+let HIST=[];
+const QUEUE={420:'ランク',440:'フレックス',400:'ノーマル',430:'ノーマル',490:'クイック',450:'ARAM'};
+const isTank=g=>g.items.filter(i=>TANK.has(i)).length>=Math.min(2,g.items.length);
+async function loadHist(){try{HIST=await (await fetch('/history',{cache:'no-store'})).json();if(!Array.isArray(HIST))HIST=[]}catch(e){HIST=null}renderHist()}
+function renderHist(){
+  const box=$('hist');if(!box||!D)return;
+  if(HIST===null){box.innerHTML='<div class="meta">ショートカットから起動すると、LoLの戦績を自動で記録します</div>';return}
+  const g=HIST.filter(h=>h.champ===CHAMPS[CUR].cid).sort((a,b)=>b.at-a.at);
+  if(!g.length){box.innerHTML=`<div class="meta">${CHAMPS[CUR].name}の試合はまだ記録されていません（LoLクライアントを起動中に開くと、直近の戦績を取り込みます）</div>`;return}
+  const wr=a=>a.length?`${a.filter(x=>x.win).length}勝${a.filter(x=>!x.win).length}敗（${(100*a.filter(x=>x.win).length/a.length).toFixed(0)}%）`:'—';
+  const tank=g.filter(isTank),ap=g.filter(x=>!isTank(x));
+  const name=c=>D.champs[c]?.name||c;
+  box.innerHTML=`<table><tr><td>全体</td><td class="n">${wr(g)}</td></tr><tr><td>タンク寄り</td><td class="n">${wr(tank)}</td></tr><tr><td>それ以外</td><td class="n">${wr(ap)}</td></tr>
+    ${['ranked','normal'].map(t=>{const a=g.filter(x=>t==='ranked'?[420,440].includes(x.queue):[400,430,490].includes(x.queue));return `<tr><td>${t==='ranked'?'ランク':'ノーマル'}</td><td class="n">${wr(a)}</td></tr>`}).join('')}</table>
+    <div class="tag" style="margin-top:8px">最近の試合</div>
+    <table>${g.slice(0,15).map(x=>`<tr><td class="n ${x.win?'up':'down'}">${x.win?'勝':'負'}</td><td>${x.items.length?icons(x.items.slice(0,6).join('_')):''}</td><td class="meta">${x.k}/${x.d}/${x.a}・${QUEUE[x.queue]||''}<br>${x.enemies.map(name).join('・')}</td></tr>`).join('')}</table>
+    <p class="meta">「タンク寄り」は完成アイテムの多くがタンクアイテムの試合。記録はPCの history.json に残ります。</p>`;
+}
 let PINS=[];
 function loadPins(){try{PINS=JSON.parse(localStorage.getItem('lb_pins_'+CUR))||null}catch(e){PINS=null}if(!PINS)PINS=[...CHAMPS[CUR].pins]}
 function savePins(){try{localStorage.setItem('lb_pins_'+CUR,JSON.stringify(PINS))}catch(e){}}
@@ -282,7 +300,7 @@ async function loadChamp(c){
    <div class="row gvrow">${ROLES.map(([r])=>`<button class="gvb" data-r="${r}" title="この敵に重傷が要るか切り替え">重傷</button>`).join('')}</div>
    <div class="row"><div class="seg" role="group" aria-label="ビルドの種類"><button data-mode="tank" aria-pressed="${MODE==='tank'}">タンク</button><button data-mode="all" aria-pressed="${MODE==='all'}">通常（全アイテム）</button></div>
    <label class="auto">補正<select id="adv"><option value="1">安全</option><option value="3">普通</option><option value="10">冒険</option></select></label></div>
-   <div class="row"><button id="rand">ランダム構成</button><button id="clr">リセット</button><span class="grow"></span><label class="auto"><input type="checkbox" id="auto" ${AUTO?'checked':''}>ピックを自動で読む</label></div><details class="cmpbox" id="cmpd"><summary>アイテムを指定して比べる（少ないデータも）</summary><div id="cmp"></div></details><div id="out"></div>`;
+   <div class="row"><button id="rand">ランダム構成</button><button id="clr">リセット</button><span class="grow"></span><label class="auto"><input type="checkbox" id="auto" ${AUTO?'checked':''}>ピックを自動で読む</label></div><details class="cmpbox" id="histd"><summary>自分の記録（LoLの戦績から自動）</summary><div id="hist"><div class="meta">読み込み中…</div></div></details><details class="cmpbox" id="cmpd"><summary>アイテムを指定して比べる（少ないデータも）</summary><div id="cmp"></div></details><div id="out"></div>`;
   ROLES.forEach(([r])=>$('p_'+r).addEventListener('change',()=>{AUTO=false;$('auto').checked=false;render()}));
   $('adv').value=String(ADV);
   $('adv').onchange=e=>{ADV=+e.target.value;try{localStorage.setItem('lb_adv',ADV)}catch(_){}build();render()};
@@ -326,7 +344,7 @@ document.addEventListener('click',e=>{if(e.target.id==='pasteBtn')importData($('
 document.addEventListener('change',async e=>{if(e.target.id==='fileIn'&&e.target.files[0])importData(await e.target.files[0].text())});
 $('champs').innerHTML=Object.entries(CHAMPS).map(([c,v])=>`<button data-c="${c}" aria-pressed="false"><img src="https://ddragon.leagueoflegends.com/cdn/16.22.1/img/champion/${v.img}.png" alt="">${v.name}</button>`).join('');
 document.querySelectorAll('.champs button').forEach(b=>b.onclick=()=>loadChamp(b.dataset.c));
-loadChamp('swain').then(()=>{poll();setInterval(poll,2000)});
+loadChamp('swain').then(()=>{poll();setInterval(poll,2000);loadHist();setInterval(loadHist,120000)});
 </script>
 </body>
 </html>

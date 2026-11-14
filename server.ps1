@@ -64,6 +64,41 @@ function Get-Picks {
   return @{ source = 'none'; enemies = @() }
 }
 
+# --- 自分の試合結果を、LoLクライアントの戦績から自動で記録する ---
+function Update-History {
+  $file = Join-Path $dir 'history.json'
+  $hist = @()
+  if (Test-Path $file) { try { $hist = @([IO.File]::ReadAllText($file, [Text.Encoding]::UTF8) | ConvertFrom-Json) } catch { $hist = @() } }
+  if ($null -eq $script:lcu) { $script:lcu = Get-Lcu }
+  if ($null -eq $script:lcu) { return $hist }
+  $base = "https://127.0.0.1:$($script:lcu.port)"
+  $me = Get-Json "$base/lol-summoner/v1/current-summoner" $script:lcu.auth
+  $list = Get-Json "$base/lol-match-history/v1/products/lol/current-summoner/matches?begIndex=0&endIndex=30" $script:lcu.auth
+  if ($null -eq $me -or $null -eq $list) { return $hist }
+  $known = @{}; foreach ($h in $hist) { $known[[string]$h.id] = $true }
+  $added = 0
+  foreach ($g in @($list.games.games)) {
+    if ($known[[string]$g.gameId]) { continue }
+    $full = Get-Json "$base/lol-match-history/v1/games/$($g.gameId)" $script:lcu.auth
+    if ($null -eq $full) { continue }
+    $myPart = ($full.participantIdentities | Where-Object { $_.player.puuid -eq $me.puuid -or $_.player.summonerId -eq $me.summonerId } | Select-Object -First 1).participantId
+    $mine = $full.participants | Where-Object { $_.participantId -eq $myPart } | Select-Object -First 1
+    if ($null -eq $mine) { continue }
+    $st = $mine.stats
+    $items = @($st.item0, $st.item1, $st.item2, $st.item3, $st.item4, $st.item5) | Where-Object { $_ -gt 0 } | ForEach-Object { [string]$_ }
+    $enemies = @($full.participants | Where-Object { $_.teamId -ne $mine.teamId } | ForEach-Object { [string]$_.championId })
+    $allies  = @($full.participants | Where-Object { $_.teamId -eq $mine.teamId -and $_.participantId -ne $myPart } | ForEach-Object { [string]$_.championId })
+    $hist += [ordered]@{ id = [string]$g.gameId; at = $full.gameCreation; queue = $full.queueId; champ = [string]$mine.championId; win = [bool]$st.win
+      items = $items; enemies = $enemies; allies = $allies; k = $st.kills; d = $st.deaths; a = $st.assists; min = [math]::Round($full.gameDuration / 60) }
+    $added++
+  }
+  if ($added -gt 0) {
+    [IO.File]::WriteAllText($file, (ConvertTo-Json @($hist) -Depth 6 -Compress), (New-Object Text.UTF8Encoding $false))
+    Write-Host "試合結果を $added 件記録しました"
+  }
+  return $hist
+}
+
 $listener = New-Object Net.HttpListener
 $listener.Prefixes.Add("http://localhost:$PORT/")
 try { $listener.Start() } catch { Write-Host 'すでに起動しています。'; Start-Sleep 2; exit }
@@ -88,6 +123,7 @@ while ($listener.IsListening) {
         $bytes = [Text.Encoding]::UTF8.GetBytes('{"ok":true}')
       } else { $resp.StatusCode = 400; $bytes = [Text.Encoding]::UTF8.GetBytes('{}') }
     }
+    elseif ($path -eq '/history') { $bytes = [Text.Encoding]::UTF8.GetBytes((ConvertTo-Json @(Update-History) -Depth 6 -Compress)) }
     elseif ($path -eq '/picks') { $bytes = [Text.Encoding]::UTF8.GetBytes((Get-Picks | ConvertTo-Json -Depth 5 -Compress)) }
     else {
       $name = if ($path -eq '/') { 'index.html' } else { [IO.Path]::GetFileName($path) }

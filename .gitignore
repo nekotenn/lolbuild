@@ -1,3 +1,4 @@
 data_*.json
 update_log.txt
 *.new
+history.json
