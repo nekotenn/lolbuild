@@ -1,6 +1,7 @@
 ﻿# ショートカットから起動：最新版を取得→データが無ければ取得→サーバー起動→ブラウザのタブで開く
 $dir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $URL = 'http://localhost:8765/'
+try { Start-Transcript -Path (Join-Path $dir 'start_log.txt') -Append | Out-Null } catch {}
 # --- 自動アップデート（GitHubの最新版に置き換える。失敗しても今の版で起動する）---
 try {
   [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -46,16 +47,22 @@ foreach ($c in @('swain', 'tahmkench')) {
 }
 $alive = $false
 try { $null = Invoke-WebRequest ($URL + 'ping') -UseBasicParsing -TimeoutSec 1; $alive = $true } catch {}
-if (-not $alive) {
-  Start-Process powershell -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', ('"' + (Join-Path $dir 'server.ps1') + '"') -WorkingDirectory $dir
+if ($alive) { Start-Process $URL; exit }
+# サーバーは別の窓ではなく、この窓の中で動かす（別の窓だと起動に失敗しても分からないため）
+# 先に「少し待ってからページを開く」係を裏で動かしておく
+Start-Job -ArgumentList $URL, (Join-Path $dir 'index.html') -ScriptBlock {
+  param($u, $fallback)
   for ($i = 0; $i -lt 40; $i++) {
-    Start-Sleep -Milliseconds 400
-    try { $null = Invoke-WebRequest ($URL + 'ping') -UseBasicParsing -TimeoutSec 1; $alive = $true; break } catch {}
+    Start-Sleep -Milliseconds 500
+    try { $null = Invoke-WebRequest ($u + 'ping') -UseBasicParsing -TimeoutSec 1; Start-Process $u; return } catch {}
   }
-}
-if ($alive) { Start-Process $URL }
-else {
-  # サーバーが動かないときも、ページだけは開く（ピックの自動読み取りと戦績記録は止まる）
-  Write-Host 'サーバーが起動しなかったので、ページを直接開きます。'
-  Start-Process (Join-Path $dir 'index.html')
+  Start-Process $fallback
+} | Out-Null
+Write-Host 'サーバーを起動します（この窓を閉じると、ピックの自動読み取りが止まります）'
+try { & (Join-Path $dir 'server.ps1') }
+catch {
+  $msg = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss') + ' サーバーが止まりました: ' + $_.Exception.Message
+  try { Add-Content -Path (Join-Path ([Environment]::GetFolderPath('Desktop')) 'LoLビルド_エラー.txt') -Value $msg -Encoding UTF8 } catch {}
+  Write-Host $msg
+  Read-Host 'Enterで閉じる'
 }
