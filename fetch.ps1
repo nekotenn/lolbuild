@@ -85,4 +85,5 @@ $out = [ordered]@{
 $json = $out | ConvertTo-Json -Depth 10 -Compress
 $utf8 = New-Object Text.UTF8Encoding $false
 [IO.File]::WriteAllText((Join-Path $dir "data_$Champ.json"), $json, $utf8)
+[IO.File]::WriteAllText((Join-Path $dir "data_$Champ.js"), "window.LB_DATA=window.LB_DATA||{};window.LB_DATA['$Champ']=$json;", $utf8)
 Write-Host "[$Champ] 完了: 敵 $($enemies.Count) 体分"

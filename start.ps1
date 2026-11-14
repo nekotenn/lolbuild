@@ -34,9 +34,14 @@ $alive = $false
 try { $null = Invoke-WebRequest ($URL + 'ping') -UseBasicParsing -TimeoutSec 1; $alive = $true } catch {}
 if (-not $alive) {
   Start-Process powershell -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', ('"' + (Join-Path $dir 'server.ps1') + '"') -WorkingDirectory $dir
-  for ($i = 0; $i -lt 20; $i++) {
-    Start-Sleep -Milliseconds 300
-    try { $null = Invoke-WebRequest ($URL + 'ping') -UseBasicParsing -TimeoutSec 1; break } catch {}
+  for ($i = 0; $i -lt 40; $i++) {
+    Start-Sleep -Milliseconds 400
+    try { $null = Invoke-WebRequest ($URL + 'ping') -UseBasicParsing -TimeoutSec 1; $alive = $true; break } catch {}
   }
 }
-Start-Process $URL
+if ($alive) { Start-Process $URL }
+else {
+  # サーバーが動かないときも、ページだけは開く（ピックの自動読み取りと戦績記録は止まる）
+  Write-Host 'サーバーが起動しなかったので、ページを直接開きます。'
+  Start-Process (Join-Path $dir 'index.html')
+}

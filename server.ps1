@@ -5,7 +5,20 @@ $dir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $PORT = 8765
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 # LoLクライアントは自分のPC内の自己署名証明書なので、確認を外す
-[Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+function Write-ErrLog($msg) {
+  $t = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss') + ' ' + $msg
+  try { Add-Content -Path (Join-Path $dir 'server_log.txt') -Value $t -Encoding UTF8 } catch {}
+  try { Add-Content -Path (Join-Path ([Environment]::GetFolderPath('Desktop')) 'LoLビルド_エラー.txt') -Value $t -Encoding UTF8 } catch {}
+}
+trap { Write-ErrLog ("止まりました: " + $_.Exception.Message + " @ " + $_.InvocationInfo.PositionMessage); Write-Host 'エラーで止まりました。デスクトップの LoLビルド_エラー.txt を見てください。'; Read-Host 'Enterで閉じる'; exit }
+# 自分のPC内のLoLクライアントは自己署名証明書なので確認を外す（PowerShellの別スレッドで落ちないようC#で設定）
+try {
+  Add-Type -TypeDefinition @"
+using System.Net;
+public static class LbTrust { public static void Enable() { ServicePointManager.ServerCertificateValidationCallback = delegate { return true; }; } }
+"@
+  [LbTrust]::Enable()
+} catch { Write-ErrLog ('証明書設定に失敗: ' + $_.Exception.Message) }
 
 $script:lcu = $null
 function Get-Lcu {
@@ -99,9 +112,16 @@ function Update-History {
   return $hist
 }
 
-$listener = New-Object Net.HttpListener
-$listener.Prefixes.Add("http://localhost:$PORT/")
-try { $listener.Start() } catch { Write-Host 'すでに起動しています。'; Start-Sleep 2; exit }
+$listener = $null
+foreach ($pre in @("http://localhost:$PORT/", "http://127.0.0.1:$PORT/")) {
+  try { $l = New-Object Net.HttpListener; $l.Prefixes.Add($pre); $l.Start(); $listener = $l; break }
+  catch { Write-ErrLog ("$pre で起動できません: " + $_.Exception.Message) }
+}
+if ($null -eq $listener) {
+  try { $null = Invoke-WebRequest "http://localhost:$PORT/ping" -UseBasicParsing -TimeoutSec 1; Write-Host 'すでに起動しています。'; Start-Sleep 2; exit } catch {}
+  Write-Host 'サーバーを起動できませんでした。デスクトップの LoLビルド_エラー.txt を見てください。'
+  Read-Host 'Enterで閉じる'; exit
+}
 Write-Host "起動しました： http://localhost:$PORT/"
 Write-Host 'この窓を閉じるとページの自動読み取りが止まります。'
 
@@ -119,6 +139,7 @@ while ($listener.IsListening) {
       $m = [regex]::Match($body, '"champ"\s*:\s*"([a-z]+)"')
       if ($m.Success -and $body.Contains('"enemies"')) {
         [IO.File]::WriteAllText((Join-Path $dir ('data_' + $m.Groups[1].Value + '.json')), $body, (New-Object Text.UTF8Encoding $false))
+        [IO.File]::WriteAllText((Join-Path $dir ('data_' + $m.Groups[1].Value + '.js')), ("window.LB_DATA=window.LB_DATA||{};window.LB_DATA['" + $m.Groups[1].Value + "']=" + $body + ';'), (New-Object Text.UTF8Encoding $false))
         Write-Host ('貼り付けたデータを保存しました: data_' + $m.Groups[1].Value + '.json')
         $bytes = [Text.Encoding]::UTF8.GetBytes('{"ok":true}')
       } else { $resp.StatusCode = 400; $bytes = [Text.Encoding]::UTF8.GetBytes('{}') }
@@ -128,7 +149,7 @@ while ($listener.IsListening) {
     else {
       $name = if ($path -eq '/') { 'index.html' } else { [IO.Path]::GetFileName($path) }
       $file = Join-Path $dir $name
-      if (($name -match '^(index\.html|data_[a-z]+\.json)$') -and (Test-Path $file)) {
+      if (($name -match '^(index\.html|data_[a-z]+\.(json|js))$') -and (Test-Path $file)) {
         $bytes = [IO.File]::ReadAllBytes($file); $type = $TYPES[[IO.Path]::GetExtension($file)]
       } else { $resp.StatusCode = 404; $bytes = [Text.Encoding]::UTF8.GetBytes('{}') }
     }

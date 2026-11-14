@@ -291,6 +291,7 @@ async function loadChamp(c){
   document.querySelectorAll('.champs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.c===c));
   let fileD=null,memD=null;
   try{fileD=await (await fetch('data_'+c+'.json',{cache:'no-store'})).json()}catch(e){}
+  if(!fileD){try{await new Promise((ok,ng)=>{const s=document.createElement('script');s.src='data_'+c+'.js?t='+Date.now();s.onload=ok;s.onerror=ng;document.head.appendChild(s)});fileD=window.LB_DATA?.[c]||null}catch(e){}}
   try{const t=localStorage.getItem('lb_data_'+c);if(t)memD=JSON.parse(t)}catch(e){}
   D=fileD&&memD?((memD.made||'')>(fileD.made||'')?memD:fileD):(fileD||memD);
   if(!D){$('app').innerHTML=`<div class="err">${CHAMPS[c].name}のデータがありません。フォルダの update_data.bat を実行するか、下の「データを貼り付ける」から読み込んでください。</div>`;return}
@@ -312,7 +313,7 @@ async function loadChamp(c){
 
 async function poll(){
   if(!D)return;
-  let j=null;try{j=await (await fetch('/picks',{cache:'no-store'})).json()}catch(e){$('status').innerHTML='自動読み取り：サーバー停止中';return}
+  let j=null;try{if(location.protocol==='file:')throw 0;j=await (await fetch('/picks',{cache:'no-store'})).json()}catch(e){$('status').innerHTML=`自動読み取り：停止中（ショートカットから開くと動きます）<br>データ ${D.made}`;return}
   const txt={ingame:'<b>ゲーム中</b>から読み取り中',champselect:'<b>ピック画面</b>から読み取り中',client:'クライアント待機中',none:'LoLが起動していません'}[j.source]||'';
   $('status').innerHTML=`${txt}<br>データ ${D.made}・${({all:'全ランク',emerald_plus:'エメラルド以上'})[D.tier]||'エメラルド以上'}・直近30日・全体 ${(+D.global.n).toLocaleString()}試合`;
   if(!AUTO)return;
