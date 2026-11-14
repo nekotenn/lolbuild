@@ -1,0 +1,13 @@
+README.txt
+auto_update_off.bat
+auto_update_on.bat
+fetch.ps1
+files.txt
+index.html
+make_shortcut.bat
+make_shortcut.ps1
+server.ps1
+start.ps1
+update.ps1
+update_auto.bat
+update_data.bat

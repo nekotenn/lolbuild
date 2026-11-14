@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LoLビルド 変わり種</title>
+<style>
+:root{--bg:#1a1d24;--panel:#232733;--line:#343a48;--text:#e9e3d6;--mute:#8f97a6;--accent:#b8293f;--up:#6fae78;--down:#c9605a;--gold:#c9a24a}
+body.tahmkench{--accent:#3f9a8c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"BIZ UDPGothic","Yu Gothic UI","Meiryo",sans-serif;font-size:15px;line-height:1.5}
+.wrap{max-width:760px;margin:0 auto;padding:14px 12px 40px}
+header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.champs{display:flex;gap:6px}
+.champs button{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:20px}
+.champs img{width:30px;height:30px;border-radius:50%}
+.champs button[aria-pressed=true]{border-color:var(--accent);color:var(--text);background:#2c2f3b}
+.status{margin-left:auto;font-size:12px;color:var(--mute);text-align:right}
+.status b{font-weight:400;color:var(--up)}
+button{background:transparent;color:var(--mute);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font:inherit;font-size:13px;cursor:pointer}
+button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.enemy{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px}
+.e{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.e .r{font-size:11px;color:var(--mute)}
+.e img{width:46px;height:46px;border-radius:50%;border:2px solid var(--line);background:#2c313d}
+.e select{width:100%;background:#1d2029;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:4px 2px;font:inherit;font-size:12px}
+.row{display:flex;gap:8px;margin:8px 0 14px;flex-wrap:wrap}
+.row .grow{flex:1}
+#rand{color:var(--text);border-color:var(--accent)}
+label.auto{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mute)}
+.path{background:var(--panel);border:1px solid var(--accent);border-radius:10px;padding:10px;margin-bottom:14px}
+.path h2{font-size:14px;margin:0 0 8px}
+.path .seq{display:flex;gap:6px;flex-wrap:wrap}
+.step{display:flex;flex-direction:column;align-items:center;width:62px;font-size:11px;color:var(--mute);text-align:center}
+.step img{width:48px;height:48px;border-radius:6px;border:1px solid #000}
+.step .d{font-size:12px}
+.slot{margin-bottom:12px}
+.slot h3{font-size:15px;margin:0 0 6px;display:flex;align-items:baseline;gap:8px}
+.slot h3 span{font-size:11px;color:var(--mute);font-weight:400}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:480px){.cards{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px;min-width:0}
+.card.alt{border-color:var(--accent);border-left:4px solid var(--accent)}
+.tag{font-size:11px;color:var(--mute);margin-bottom:4px}
+.it{display:flex;gap:8px;align-items:center}
+.icons{display:flex;gap:2px;flex:none;align-items:flex-end}
+.icons img{width:40px;height:40px;border-radius:5px;border:1px solid #000}
+.icons .q{font-size:11px;color:var(--mute)}
+.nm{font-weight:700;font-size:14px;line-height:1.3}
+.meta{font-size:11px;color:var(--mute)}
+.big{margin-left:auto;font-size:19px;font-weight:700;text-align:right;line-height:1.1;flex:none}
+.big small{display:block;font-size:10px;color:var(--mute);font-weight:400}
+.conf{display:inline-block;font-size:11px;padding:0 6px;border-radius:9px;border:1px solid var(--line);margin-top:5px}
+.conf.c3{border-color:var(--gold);color:var(--gold)}
+.why{font-size:11px;color:var(--mute);margin-top:4px}
+.why b{color:var(--text);font-weight:400}
+.up{color:var(--up)}.down{color:var(--down)}
+.none{color:var(--mute);font-size:12px;padding:8px 4px}
+details{margin-top:6px}
+summary{cursor:pointer;color:var(--mute);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
+td{padding:3px 4px;border-top:1px solid var(--line);vertical-align:middle}
+td .icons img{width:22px;height:22px;border-radius:3px}
+td.n{text-align:right;white-space:nowrap}
+.note{color:var(--mute);font-size:11px;margin-top:18px}
+.paste{margin-top:18px}
+.gvrow{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:6px 0 4px}
+.gvb{font-size:11px;padding:2px 0}.gvb.on{color:var(--gold);border-color:var(--gold)}.gvb:disabled{opacity:.3}
+.seg{display:flex}.seg button{border-radius:0}.seg button:first-child{border-radius:6px 0 0 6px}.seg button:last-child{border-radius:0 6px 6px 0}
+.seg button[aria-pressed=true]{color:var(--text);border-color:var(--accent);background:#2c2f3b}
+#adv{margin-left:4px;background:#1d2029;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:4px;font:inherit;font-size:13px}
+.fl{margin-bottom:8px}.ft{font-size:12px;color:var(--mute);margin-bottom:3px}
+.step .meta{font-size:10px}
+.tips{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:10px;font-size:13px}
+.tip{padding:2px 0}.tip.dim{color:var(--mute)}.tip.on{color:var(--gold)}.tip b{font-weight:700;font-size:11px;border:1px solid currentColor;border-radius:4px;padding:0 4px;margin-right:4px}
+.tips button{margin-top:6px;font-size:12px;padding:3px 8px}
+.gv{border:1px solid var(--gold);border-radius:10px;padding:8px 10px;margin-bottom:10px;font-size:13px}
+.rune{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:14px}
+.rune h3{font-size:14px;margin:0 0 6px}
+.rr{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+@media (max-width:480px){.rr{grid-template-columns:1fr}}
+.ru{display:flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:5px}
+.ru.alt2{border-color:var(--accent)}
+.ru img{width:32px;height:32px}
+.cmpbox{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:14px}
+.cmpbox[open] summary{margin-bottom:6px}
+.paste textarea{width:100%;background:#1d2029;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px;font:inherit;font-size:12px;margin-top:6px}
+.filebtn{border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:13px;color:var(--mute);cursor:pointer}
+.err{background:var(--panel);border:1px solid var(--accent);border-radius:10px;padding:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="champs" id="champs"></div>
+    <div class="status" id="status"></div>
+  </header>
+  <div id="app"><div class="none">読み込み中…</div></div>
+  <details class="paste"><summary>データを貼り付ける／ファイルから読む</summary>
+  <p class="meta">data_swain.json などの中身をそのまま貼り付けて「読み込む」。どちらのキャラのデータかは自動で判定します。</p>
+  <textarea id="pasteBox" rows="5" placeholder="ここに貼り付け"></textarea>
+  <div class="row"><button id="pasteBtn">読み込む</button><label class="filebtn">ファイルを選ぶ<input type="file" id="fileIn" accept=".json,.js,.txt" hidden></label><span id="pasteMsg" class="meta"></span></div>
+</details>
+<p class="note">変わり種＝この5人が相手のとき、補正後の勝率がいつもより上なのに、あまり買われていないアイテム（購入率10%以上なら入れ替え候補）。試合数が少ない数字は全体の平均に引き寄せています（4・5手目は引き寄せを弱め、派手めに出しています）。各手目は別々に集計した数字です。メジャイは勝っている試合ほど買われるため外しています。</p>
+</div>
+<script>
+const CHAMPS={swain:{name:'スウェイン',img:'Swain',cid:'50',ex:['3041'],pins:['3110','8020','3119','4401','3116','6657','3084']},tahmkench:{name:'タムケンチ',img:'TahmKench',cid:'223',ex:['3041'],pins:['3084','3110','4401','3068','8020']}};
+const ROLES=[['top','TOP'],['jungle','JG'],['middle','MID'],['bottom','ADC'],['support','SUP']];
+const SLOTS=[['s','始動',1],['i1','1手目',1],['i2','2手目',1],['i3','3手目',1],['i4','4手目',6],['i5','5手目',6]]; // 3つ目の数字＝割り引きの弱さ（大きいほど派手）
+const ALT_MAX_PR=10;
+const RUNE_GROUP=[['9111','凱旋','Styles/Precision/Triumph.png'],['8009','冷静沈着','Styles/Precision/PresenceOfMind/PresenceOfMind.png'],['9101','アブソーブライフ','Styles/Precision/AbsorbLife/AbsorbLife.png']];
+const GRIEVOUS_DEF=['soraka','yuumi','nami','sona','milio','aatrox','vladimir','drmundo','warwick','sylas','briar','seraphine','kalista'];
+let GRIEVOUS=(()=>{try{return JSON.parse(localStorage.getItem('lb_gv'))||GRIEVOUS_DEF}catch(e){return GRIEVOUS_DEF}})();
+const GV_ITEMS=['3916','3076','3165','3075','3011','3123'];
+const TANK=new Set(['3110','8020','3119','3121','4401','2504','6665','3068','6664','3075','3076','3143','3065','2502','3083','3084','3742','6662','3116','6653','4633','3165','6657','3916','3001','3105','3190','3050','2065','3109','3222','4005']);
+let MODE=(()=>{try{return localStorage.getItem('lb_mode')||'tank'}catch(e){return 'tank'}})();
+let ADV=(()=>{try{return +localStorage.getItem('lb_adv')||1}catch(e){return 1}})();
+const DEFAULT_TIPS={swain:`対面に合わせてフローズンハートなどタンクアイテムを積む。マリグナンスとトーチは積まない
+[重傷] 殴られ続けると分かっている構成ならブランブルベスト
+[重傷] ユーミ＋ルシアンのように殴られる時間もなく一瞬で落とすしかないなら忘却のオーブ
+[重傷] 重傷を積む試合は冷静沈着で涙をスキップ（フローズンハートが遅れるため）
+2手目はフィンブルウィンター寄り（涙を積む）
+重傷が要らない試合は凱旋（冷静沈着とどちらがいいかは下の数字で確認）`,tahmkench:`ここにコツを書く（[重傷] で始めた行は、重傷が要る敵がいるときに光る）`};
+let D=null, CUR=null, MODEL=null, EX=new Set(), AUTO=true, lastPickSig='';
+const $=id=>document.getElementById(id);
+const ICON=id=>`https://cdn5.lolalytics.com/item64/${id}.webp`;
+const CIMG=img=>`https://ddragon.leagueoflegends.com/cdn/${D?D.ver:'16.22.1'}/img/champion/${img}.png`;
+const clip=p=>Math.min(0.99,Math.max(0.01,p)), logit=p=>{p=clip(p);return Math.log(p/(1-p))}, sig=x=>1/(1+Math.exp(-x));
+const noise=(wr,n)=>{const p=clip(wr/100);return 1/(Math.max(n,1)*p*(1-p))};
+const rows=a=>(Array.isArray(a)?a:[]).map(r=>({id:String(r[0]),wr:+r[1],pr:+r[2],n:+r[3]})).filter(r=>r.n>0&&!r.id.split('_').some(x=>EX.has(x)));
+const base=rs=>{let s=0,n=0;for(const r of rs){s+=r.wr*r.n;n+=r.n}return n?s/n/100:0.5};
+function tau2(ss){let W=0,m=0;for(const s of ss){W+=s.w;m+=s.w*s.x}if(!W)return 1e-4;m/=W;let vr=0,vn=0;for(const s of ss){vr+=s.w*(s.x-m)**2;vn+=s.w*s.v}return Math.max(1e-5,(vr-vn)/W)}
+const enemyKey=key=>D.enemies[key];
+const champOf=key=>D.champs[enemyKey(key).cid]||{name:key,img:''};
+
+function getArr(o,k){
+  if(k==='r'){const st=o.r||{};return RUNE_GROUP.map(([id])=>st[id]?.[0]?[id,st[id][0][1],st[id][0][0],st[id][0][2]]:null).filter(Boolean)}
+  return o[k];
+}
+function build(){
+  MODEL={};
+  for(const [k,,loose] of [...SLOTS,['r','ルーン',1],['e','序盤',1]]){
+    const G=rows(getArr(D.global,k)); const gb=logit(base(G)); const gmap={};
+    for(const r of G)gmap[r.id]={...r,a:logit(r.wr/100)-gb,v:noise(r.wr,r.n)};
+    const tg=tau2(G.filter(r=>r.n>=30).map(r=>({x:gmap[r.id].a,v:gmap[r.id].v,w:r.n})))*loose*ADV;
+    for(const id in gmap){const g=gmap[id],f=tg/(tg+g.v);g.ah=f*g.a;g.pv=f*g.v}
+    const per={},samp=[];
+    for(const key in D.enemies){
+      const E=rows(getArr(D.enemies[key],k)),eb=logit(base(E));per[key]={};
+      for(const r of E){const g=gmap[r.id];if(!g)continue;const d=(logit(r.wr/100)-eb)-g.a,v=noise(r.wr,r.n)+g.v;per[key][r.id]={d,v,n:r.n};if(r.n>=20)samp.push({x:d,v,w:r.n})}
+    }
+    const te=tau2(samp)*loose*ADV;
+    for(const key in per)for(const id in per[key]){const e=per[key][id],f=te/(te+e.v);e.dh=f*e.d;e.pv=f*e.v}
+    MODEL[k]={G,gmap,gb,per,minN:loose>1?15:30};
+  }
+}
+function evaluate(k,picked,minN,only){
+  const M=MODEL[k];
+  const list=M.G.filter(r=>r.n>=(minN??M.minN)&&(!only||r.id.split('_').every(x=>only.has(x)))).map(r=>{const g=M.gmap[r.id];let s=g.ah,pv=g.pv;const parts=[];
+    for(const key of picked){const e=M.per[key]?.[r.id];if(e){s+=e.dh;pv+=e.pv;parts.push({key,dh:e.dh,n:e.n})}}
+    return {...r,score:s,pv,parts}});
+  if(!list.length)return null;
+  const std=list.reduce((a,b)=>b.pr>a.pr?b:a);
+  for(const x of list){x.delta=(sig(M.gb+x.score)-sig(M.gb+std.score))*100;const se=Math.sqrt(x.pv+std.pv);x.z=se>0?(x.score-std.score)/se:0;x.conf=x.z>=1.5&&x.delta>=1?3:x.z>=0.5?2:1}
+  return {std,list,alts:list.filter(x=>x.id!==std.id&&x.delta>=0.3).sort((a,b)=>b.delta-a.delta).slice(0,4),all:[...list].sort((a,b)=>b.delta-a.delta)};
+}
+const itemName=id=>id.split('_').map(x=>D.items[x]||('#'+x)).filter((v,i,a)=>a.indexOf(v)===i).join(' ＋ ');
+function icons(id){const c={};id.split('_').forEach(p=>c[p]=(c[p]||0)+1);return '<div class="icons">'+Object.keys(c).map(p=>`<img src="${ICON(p)}" alt="${D.items[p]||p}" loading="lazy">`+(c[p]>1?`<span class="q">×${c[p]}</span>`:'')).join('')+'</div>'}
+const cls=v=>Math.abs(v)<0.05?'':v>0?'up':'down';
+const fmt=v=>Math.abs(v)<0.05?'±0.0%':(v>0?'+':'')+v.toFixed(1)+'%';
+const CONF={3:'信用度 高',2:'信用度 中',1:'信用度 低：遊び枠'};
+function why(x,std){
+  const ps=x.parts.map(p=>{const s=std.parts.find(q=>q.key===p.key);return{...p,rel:p.dh-(s?s.dh:0)}}).filter(p=>Math.abs(p.rel)>0.01).sort((a,b)=>b.rel-a.rel).slice(0,2);
+  if(!ps.length)return 'この構成より、アイテム自体の勝率が効いています';
+  return ps.map(p=>`<b>${champOf(p.key).name}</b>${p.rel>0?'に強い':'に弱い'}（${p.n}試合）`).join('、');
+}
+const M_MIN=k=>MODEL[k].minN;
+function picked(){return ROLES.map(([r])=>$('p_'+r).value).filter(Boolean)}
+
+function render(){
+  const P=picked();
+  ROLES.forEach(([r])=>{const v=$('p_'+r).value,b=document.querySelector(`.gvb[data-r="${r}"]`);if(b){b.disabled=!v;b.classList.toggle('on',!!v&&GRIEVOUS.includes(v.split('|')[1]))}});
+  ROLES.forEach(([r])=>{const v=$('p_'+r).value,im=$('i_'+r);im.src=v?CIMG(champOf(v).img):'';im.style.visibility=v?'visible':'hidden'});
+  const only=MODE==='tank'?TANK:null;
+  const R={};for(const [k] of SLOTS)R[k]=evaluate(k,P,undefined,k==='s'?null:only);
+  const gv=P.map(k=>k.split('|')[1]).filter(s=>GRIEVOUS.includes(s));
+  const flow=(flt,pickFn,force)=>{const used=new Set();let seq='';
+    for(const [k,label] of SLOTS){if(k==='s')continue;const RR=evaluate(k,P,1,flt);if(!RR)continue;
+      let best=null;
+      if(force&&!used.size){best=[...RR.list].filter(x=>force.includes(x.id)).sort((a,b)=>b.score-a.score)[0]}
+      if(!best)best=pickFn(RR).find(x=>!used.has(x.id)&&!(force&&force.includes(x.id)&&used.size));
+      if(!best)continue;used.add(best.id);
+      seq+=`<div class="step">${label}<img src="${ICON(best.id)}" alt="${itemName(best.id)}" title="${itemName(best.id)}"><span class="d ${cls(best.delta)}">${best.id===RR.std.id?'いつもの':fmt(best.delta)}</span>${best.n<MODEL[k].minN?'<span class="meta">少</span>':''}</div>`}
+    return seq};
+  const byScore=RR=>[...RR.list].filter(x=>x.n>=15).sort((a,b)=>b.score-a.score);
+  const byPop=RR=>[...RR.list].sort((a,b)=>b.pr-a.pr);
+  const flows=[['おすすめ（全アイテムから）',flow(null,byScore)],['タンクならこれ',flow(TANK,byScore)],
+    gv.length?['重傷入り（1手目に重傷）',flow(null,byScore,GV_ITEMS)]:['みんなのいつもの',flow(null,byPop)]];
+  let seq=flows.map(([t,q])=>`<div class="fl"><div class="ft">${t}</div><div class="seq">${q}</div></div>`).join('');
+  let h=extraBox(P)+`<div class="path"><h2>${P.length?'この構成ならこの流れ':'流れ（敵を選ぶと変わります）'}</h2>${seq}</div>`;
+  for(const [k,label,loose] of SLOTS){const r=R[k];if(!r)continue;const s=r.std;
+    h+=`<section class="slot"><h3>${label}${loose>1?'<span>派手め（試合数少なめ）</span>':''}${MODE==='tank'&&k!=='s'?'<span>タンクアイテムのみ</span>':''}</h3><div class="cards">
+      <div class="card"><div class="tag">いつもの（購入率 ${s.pr.toFixed(0)}%）</div><div class="it">${icons(s.id)}<div><div class="nm">${itemName(s.id)}</div><div class="meta">全体 ${s.wr.toFixed(1)}%・${s.n.toLocaleString()}試合</div></div></div></div>`;
+    if(!P.length)h+=`<div class="none">敵を選ぶと、この構成だけの変わり種が出ます</div>`;
+    else if(!r.alts.length)h+=`<div class="none">この構成では、いつもので十分です</div>`;
+    for(const a of r.alts)h+=`<div class="card alt"><div class="tag">${a.pr<ALT_MAX_PR?"変わり種":"入れ替え候補"}（購入率 ${a.pr.toFixed(1)}%）</div><div class="it">${icons(a.id)}<div><div class="nm">${itemName(a.id)}</div><div class="meta">全体 ${a.wr.toFixed(1)}%・${a.n.toLocaleString()}試合</div></div><div class="big ${a.delta>=0?'up':'down'}">${fmt(a.delta)}<small>いつもより</small></div></div><span class="conf c${a.conf}">${CONF[a.conf]}</span><div class="why">${why(a,s)}</div></div>`;
+    const few=(evaluate(k,P,1,k==='s'?null:only)?.all||[]).filter(x=>x.n<M_MIN(k));
+    h+=`</div><details><summary>全候補を見る（${r.all.length}${few.length?'＋少'+few.length:''}）</summary><table>${r.all.map(x=>`<tr><td>${icons(x.id)}</td><td>${itemName(x.id)}</td><td class="n ${x.delta>=0?'up':'down'}">${x.id===s.id?'基準':fmt(x.delta)}</td><td class="n">${x.pr.toFixed(1)}%</td><td class="n">${x.n.toLocaleString()}</td></tr>`).join('')}</table>${few.length?`<div class="tag" style="margin-top:8px">試合数が少ないもの（補正後／生の勝率）</div><table>${few.map(x=>`<tr><td>${icons(x.id)}</td><td>${itemName(x.id)}</td><td class="n ${x.delta>=0?'up':'down'}">${fmt(x.delta)}</td><td class="n">生 ${x.wr.toFixed(0)}%</td><td class="n">${x.n}</td></tr>`).join('')}</table>`:''}</details></section>`;
+  }
+  $('out').innerHTML=h;
+  renderCompare(P);
+}
+function vsAvg(k,id,P){const R=evaluate(k,P,1);const x=R?.list.find(y=>y.id===id);if(!x)return null;const M=MODEL[k];return {d:(sig(M.gb+x.score)-sig(M.gb))*100,n:x.n,conf:x.conf}}
+function extraBox(P){
+  const tips=loadTips();const gv=P.map(k=>k.split('|')[1]).filter(s=>GRIEVOUS.includes(s));
+  let h=`<div class="tips">${tips.split('\n').filter(l=>l.trim()).map(l=>{const g=l.startsWith('[重傷]');return `<div class="tip${g&&gv.length?' on':''}${g&&!gv.length?' dim':''}">${l.replace(/^\[重傷\]\s*/,'<b>重傷</b> ')}</div>`}).join('')}<button id="editTips">コツを編集</button></div>`;
+  if(gv.length){
+    const o=vsAvg('e','3916',P),b=vsAvg('e','3076',P);
+    const f=x=>x?`<span class="${cls(x.d)}">${fmt(x.d)}</span><span class="meta">（${x.n}試合）</span>`:'<span class="meta">データなし</span>';
+    h+=`<div class="gv"><b>重傷が要る敵：${gv.map(s=>D.champs[Object.keys(D.champs).find(c=>D.champs[c].slug===s)]?.name||s).join('・')}</b><div class="it" style="margin-top:6px">${icons('3916')}<div class="nm">忘却のオーブ ${f(o)}</div></div><div class="it" style="margin-top:4px">${icons('3076')}<div class="nm">ブランブルベスト ${f(b)}</div></div><div class="meta">序盤に買った試合の、平均との差（補正後）</div></div>`;
+  }
+  const R=MODEL.r&&MODEL.r.G.length?evaluate('r',P,1):null;
+  const t=vsAvg('e','3070',P);
+  h+=`<div class="rune"><h3>ルーンと涙</h3>`;
+  if(R){h+=`<div class="rr">${RUNE_GROUP.map(([id,nm,img])=>{const x=R.list.find(y=>y.id===id);if(!x)return '';return `<div class="ru${x.id===R.std.id?'':' alt2'}"><img src="https://ddragon.leagueoflegends.com/cdn/img/perk-images/${img}" alt=""><div><div class="nm">${nm}</div><div class="meta">${x.id===R.std.id?'いつもの':`<span class="${cls(x.delta)}">${fmt(x.delta)}</span>・${CONF[x.conf]}`}・${x.n.toLocaleString()}試合</div></div></div>`}).join('')}</div>`}
+  else h+=`<div class="meta">データを取り直すと、凱旋と冷静沈着の比較が出ます</div>`;
+  h+=`<div class="it" style="margin-top:8px">${icons('3070')}<div><div class="nm">涙を早めに買う ${t?`<span class="${cls(t.d)}">${fmt(t.d)}</span>`:''}</div><div class="meta">${t?`序盤に涙を買った試合の、平均との差（補正後）・${t.n.toLocaleString()}試合`:'データを取り直すと出ます'}</div></div></div></div>`;
+  return h;
+}
+function loadTips(){try{return localStorage.getItem('lb_tips_'+CUR)??DEFAULT_TIPS[CUR]}catch(e){return DEFAULT_TIPS[CUR]}}
+document.addEventListener('click',e=>{if(e.target.id==='editTips'){const v=prompt('コツ（1行に1つ。[重傷] で始めた行は重傷が要る敵がいるときに光ります）',loadTips());if(v!==null){try{localStorage.setItem('lb_tips_'+CUR,v)}catch(_){}render()}}});
+let PINS=[];
+function loadPins(){try{PINS=JSON.parse(localStorage.getItem('lb_pins_'+CUR))||null}catch(e){PINS=null}if(!PINS)PINS=[...CHAMPS[CUR].pins]}
+function savePins(){try{localStorage.setItem('lb_pins_'+CUR,JSON.stringify(PINS))}catch(e){}}
+function renderCompare(P){
+  const box=$('cmp');if(!box)return;
+  const cols=SLOTS.filter(([k])=>k!=='s');
+  const R={};for(const [k] of cols)R[k]=evaluate(k,P,1);
+  const known=new Set();for(const [k] of cols)for(const r of MODEL[k].G)if(!r.id.includes('_'))known.add(r.id);
+  const pins=PINS.filter(id=>known.has(id));
+  const cell=(k,id)=>{const x=R[k]?.list.find(y=>y.id===id);if(!x)return '<td class="n">—</td>';
+    const std=R[k].std;const d=x.id===std.id?'基準':fmt(x.delta);
+    return `<td class="n"><span class="${x.id===std.id?'':x.delta>=0?'up':'down'}">${d}</span><br><span class="meta">生${x.wr.toFixed(0)}%・${x.n}試合${x.n<MODEL[k].minN?'・少':''}</span></td>`};
+  const opts=[...known].filter(id=>!pins.includes(id)).sort((a,b)=>(D.items[a]||'').localeCompare(D.items[b]||'','ja')).map(id=>`<option value="${id}">${D.items[id]||id}</option>`).join('');
+  box.innerHTML=`<table><tr><td></td><td></td>${cols.map(([,l])=>`<td class="n meta">${l}</td>`).join('')}<td></td></tr>
+    ${pins.map(id=>`<tr><td>${icons(id)}</td><td>${D.items[id]||id}</td>${cols.map(([k])=>cell(k,id)).join('')}<td><button data-unpin="${id}" aria-label="外す">×</button></td></tr>`).join('')}</table>
+    <div class="row"><select id="pinSel" style="flex:1;background:#1d2029;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:5px;font:inherit;font-size:13px"><option value="">アイテムを追加…</option>${opts}</select></div>
+    <p class="meta">数字は「この敵5人で、各手目のいつものより何%上か（補正後）」。「生」は補正前の勝率、試合数は全体の数。「少」は試合数が少なく、補正後はほぼ平均に引き寄せた値です。</p>`;
+}
+document.addEventListener('click',e=>{const u=e.target.dataset?.unpin;if(u){PINS=PINS.filter(x=>x!==u);savePins();renderCompare(picked())}});
+document.addEventListener('change',e=>{if(e.target.id==='pinSel'&&e.target.value){PINS.push(e.target.value);savePins();renderCompare(picked())}});
+
+// 役割が分からない敵は「よく行くレーン」から5人の組み合わせで自然な割り当てを選ぶ
+function assignRoles(list){ // list: [{slug?, pos}]
+  const roles=ROLES.map(r=>r[0]);const res={};const free=[];
+  for(const e of list){if(e.pos&&D.enemies[e.pos+'|'+e.slug]&&!res[e.pos])res[e.pos]=e.slug;else free.push(e)}
+  const open=roles.filter(r=>!res[r]);let best=null,bs=-1e9;
+  const perm=(arr,k)=>k===0?[[]]:arr.flatMap((x,i)=>perm(arr.filter((_,j)=>j!==i),k-1).map(p=>[x,...p]));
+  for(const p of perm(open,Math.min(free.length,open.length))){let s=0;p.forEach((r,i)=>{const e=D.enemies[r+'|'+free[i].slug];s+=e?Math.log(e.n+1):-20});if(s>bs){bs=s;best=p}}
+  if(best)best.forEach((r,i)=>{if(D.enemies[r+'|'+free[i].slug])res[r]=free[i].slug});
+  return res;
+}
+function setPicks(map){ROLES.forEach(([r])=>{const k=map[r]?r+'|'+map[r]:'';$('p_'+r).value=D.enemies[k]?k:''});render()}
+function randomize(){
+  AUTO=false;$('auto').checked=false;const used=new Set(),m={};
+  for(const [r] of ROLES){const ks=Object.keys(D.enemies).filter(k=>k.startsWith(r+'|')&&!used.has(k.split('|')[1]));
+    let tot=ks.reduce((a,k)=>a+D.enemies[k].n,0),x=Math.random()*tot;for(const k of ks){x-=D.enemies[k].n;if(x<=0){m[r]=k.split('|')[1];used.add(m[r]);break}}}
+  setPicks(m);
+}
+
+async function loadChamp(c){
+  CUR=c;EX=new Set(CHAMPS[c].ex);document.body.className=c;
+  document.querySelectorAll('.champs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.c===c));
+  let fileD=null,memD=null;
+  try{fileD=await (await fetch('data_'+c+'.json',{cache:'no-store'})).json()}catch(e){}
+  try{const t=localStorage.getItem('lb_data_'+c);if(t)memD=JSON.parse(t)}catch(e){}
+  D=fileD&&memD?((memD.made||'')>(fileD.made||'')?memD:fileD):(fileD||memD);
+  if(!D){$('app').innerHTML=`<div class="err">${CHAMPS[c].name}のデータがありません。フォルダの update_data.bat を実行するか、下の「データを貼り付ける」から読み込んでください。</div>`;return}
+  build();loadPins();
+  const byRole={};for(const k in D.enemies)(byRole[k.split('|')[0]]=byRole[k.split('|')[0]]||[]).push(k);
+  $('app').innerHTML=`<div class="enemy">${ROLES.map(([r,lab])=>`<label class="e"><span class="r">${lab}</span><img id="i_${r}" alt="" style="visibility:hidden"><select id="p_${r}" aria-label="敵の${lab}"><option value="">未選択</option>${(byRole[r]||[]).sort((a,b)=>champOf(a).name.localeCompare(champOf(b).name,'ja')).map(k=>`<option value="${k}">${champOf(k).name}</option>`).join('')}</select></label>`).join('')}</div>
+   <div class="row gvrow">${ROLES.map(([r])=>`<button class="gvb" data-r="${r}" title="この敵に重傷が要るか切り替え">重傷</button>`).join('')}</div>
+   <div class="row"><div class="seg" role="group" aria-label="ビルドの種類"><button data-mode="tank" aria-pressed="${MODE==='tank'}">タンク</button><button data-mode="all" aria-pressed="${MODE==='all'}">通常（全アイテム）</button></div>
+   <label class="auto">補正<select id="adv"><option value="1">安全</option><option value="3">普通</option><option value="10">冒険</option></select></label></div>
+   <div class="row"><button id="rand">ランダム構成</button><button id="clr">リセット</button><span class="grow"></span><label class="auto"><input type="checkbox" id="auto" ${AUTO?'checked':''}>ピックを自動で読む</label></div><details class="cmpbox" id="cmpd"><summary>アイテムを指定して比べる（少ないデータも）</summary><div id="cmp"></div></details><div id="out"></div>`;
+  ROLES.forEach(([r])=>$('p_'+r).addEventListener('change',()=>{AUTO=false;$('auto').checked=false;render()}));
+  $('adv').value=String(ADV);
+  $('adv').onchange=e=>{ADV=+e.target.value;try{localStorage.setItem('lb_adv',ADV)}catch(_){}build();render()};
+  document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{MODE=b.dataset.mode;try{localStorage.setItem('lb_mode',MODE)}catch(_){}document.querySelectorAll('[data-mode]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.mode===MODE));render()});
+  document.querySelectorAll('.gvb').forEach(b=>b.onclick=()=>{const v=$('p_'+b.dataset.r).value;if(!v)return;const sl=v.split('|')[1];GRIEVOUS=GRIEVOUS.includes(sl)?GRIEVOUS.filter(x=>x!==sl):[...GRIEVOUS,sl];try{localStorage.setItem('lb_gv',JSON.stringify(GRIEVOUS))}catch(_){}render()});
+  $('rand').onclick=randomize;$('clr').onclick=()=>setPicks({});$('auto').onchange=e=>{AUTO=e.target.checked;lastPickSig=''};
+  lastPickSig='';render();
+}
+
+async function poll(){
+  if(!D)return;
+  let j=null;try{j=await (await fetch('/picks',{cache:'no-store'})).json()}catch(e){$('status').innerHTML='自動読み取り：サーバー停止中';return}
+  const txt={ingame:'<b>ゲーム中</b>から読み取り中',champselect:'<b>ピック画面</b>から読み取り中',client:'クライアント待機中',none:'LoLが起動していません'}[j.source]||'';
+  $('status').innerHTML=`${txt}<br>データ ${D.made}・${({all:'全ランク',emerald_plus:'エメラルド以上'})[D.tier]||'エメラルド以上'}・直近30日・全体 ${(+D.global.n).toLocaleString()}試合`;
+  if(!AUTO)return;
+  // 自分のキャラで切り替え
+  const meCid=j.meCid||(j.meImg?Object.keys(D.champs).find(c=>D.champs[c].img===j.meImg):'');
+  const meC=Object.keys(CHAMPS).find(c=>CHAMPS[c].cid===meCid);if(meC&&meC!==CUR){await loadChamp(meC);return}
+  const list=(j.enemies||[]).map(e=>{const c=e.cid?D.champs[e.cid]:Object.values(D.champs).find(x=>x.img===e.img);return c?{slug:c.slug,pos:e.pos||''}:null}).filter(Boolean);
+  const sigs=JSON.stringify(list);if(sigs===lastPickSig||!list.length)return;lastPickSig=sigs;setPicks(assignRoles(list));
+}
+
+async function importData(text){
+  const msg=$('pasteMsg');
+  try{
+    const t=text.trim().replace(/^window\.[A-Z_]+\s*=\s*/,'').replace(/;\s*$/,'');
+    const d=JSON.parse(t);
+    if(!d.global||!d.enemies)throw new Error('形が違います');
+    if(!d.champs)throw new Error('前のスウェイン版の古い形式です。新しいupdate_data.batで取ったdata_swain.json／data_tahmkench.jsonを貼ってください');
+    const c=d.champ||(String(location.hash).slice(1))||CUR;
+    if(!CHAMPS[c])throw new Error('キャラが分かりません');
+    let saved='';
+    try{const r=await fetch('/save',{method:'POST',body:JSON.stringify(d)});if(r.ok)saved='ファイルに保存'}catch(e){}
+    try{localStorage.setItem('lb_data_'+c,JSON.stringify(d));saved=saved||'このブラウザに保存'}catch(e){}
+    msg.textContent=`${CHAMPS[c].name}：敵${Object.keys(d.enemies).length}体分を読み込みました（${saved||'保存なし・今回だけ'}）`;
+    if(!saved){D=d}
+    await loadChamp(c);if(!saved){D=d;build();render()}
+  }catch(e){msg.textContent='読み込めませんでした：'+e.message}
+}
+document.addEventListener('click',e=>{if(e.target.id==='pasteBtn')importData($('pasteBox').value)});
+document.addEventListener('change',async e=>{if(e.target.id==='fileIn'&&e.target.files[0])importData(await e.target.files[0].text())});
+$('champs').innerHTML=Object.entries(CHAMPS).map(([c,v])=>`<button data-c="${c}" aria-pressed="false"><img src="https://ddragon.leagueoflegends.com/cdn/16.22.1/img/champion/${v.img}.png" alt="">${v.name}</button>`).join('');
+document.querySelectorAll('.champs button').forEach(b=>b.onclick=()=>loadChamp(b.dataset.c));
+loadChamp('swain').then(()=>{poll();setInterval(poll,2000)});
+</script>
+</body>
+</html>
