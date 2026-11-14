@@ -243,9 +243,18 @@ function renderHist(){
   const name=c=>D.champs[c]?.name||c;
   box.innerHTML=`<table><tr><td>全体</td><td class="n">${wr(g)}</td></tr><tr><td>タンク寄り</td><td class="n">${wr(tank)}</td></tr><tr><td>それ以外</td><td class="n">${wr(ap)}</td></tr>
     ${['ranked','normal'].map(t=>{const a=g.filter(x=>t==='ranked'?[420,440].includes(x.queue):[400,430,490].includes(x.queue));return `<tr><td>${t==='ranked'?'ランク':'ノーマル'}</td><td class="n">${wr(a)}</td></tr>`}).join('')}</table>
+${itemVsStats(g)}
     <div class="tag" style="margin-top:8px">最近の試合</div>
     <table>${g.slice(0,15).map(x=>`<tr><td class="n ${x.win?'up':'down'}">${x.win?'勝':'負'}</td><td>${x.items.length?icons(x.items.slice(0,6).join('_')):''}</td><td class="meta">${x.k}/${x.d}/${x.a}・${QUEUE[x.queue]||''}<br>${x.enemies.map(name).join('・')}</td></tr>`).join('')}</table>
     <p class="meta">「タンク寄り」は完成アイテムの多くがタンクアイテムの試合。記録はPCの history.json に残ります。</p>`;
+}
+function itemVsStats(g){
+  const cnt={};for(const x of g)for(const i of new Set(x.items)){(cnt[i]=cnt[i]||{n:0,w:0});cnt[i].n++;if(x.win)cnt[i].w++}
+  const glob=id=>{let best=null;for(const k of ['i1','i2','i3','i4','i5']){const r=(D.global[k]||[]).find(r=>String(r[0])===id);if(r&&(!best||r[3]>best[3]))best=r}return best};
+  const myAll=g.filter(x=>x.win).length/g.length*100;
+  const rows=Object.entries(cnt).filter(([id,c])=>c.n>=3&&glob(id)).map(([id,c])=>{const gl=glob(id);const mine=100*c.w/c.n;return {id,n:c.n,mine,gl:+gl[1],gap:(mine-myAll)-(+gl[1]-D.global.i1.reduce((s,r)=>s+r[1]*r[3],0)/D.global.i1.reduce((s,r)=>s+r[3],0))}}).sort((a,b)=>b.gap-a.gap);
+  if(!rows.length)return `<div class="meta" style="margin-top:8px">3試合以上積んだアイテムが出てきたら、統計と並べて「自分に本当に効いているか」を出します</div>`;
+  return `<div class="tag" style="margin-top:8px">自分の勝率 vs 統計（3試合以上積んだアイテム）</div><table>${rows.map(r=>`<tr><td>${icons(r.id)}</td><td>${D.items[r.id]||r.id}</td><td class="n">自分 ${r.mine.toFixed(0)}%<br><span class="meta">${r.n}試合</span></td><td class="n">統計 ${r.gl.toFixed(1)}%</td><td class="n ${cls(r.gap)}">${r.gap>0?'自分に合う':'合わない'}<br><span class="meta">${fmt(r.gap)}</span></td></tr>`).join('')}</table><p class="meta">「自分に合う」は、自分の平均からの上がり幅が、統計の平均からの上がり幅より大きいもの。試合数が少ないうちは参考程度。</p>`;
 }
 let PINS=[];
 function loadPins(){try{PINS=JSON.parse(localStorage.getItem('lb_pins_'+CUR))||null}catch(e){PINS=null}if(!PINS)PINS=[...CHAMPS[CUR].pins]}
