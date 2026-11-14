@@ -16,6 +16,14 @@ try {
   }
   if ($n -gt 0) { Write-Host "最新版に更新しました（$n ファイル）" }
 } catch { Write-Host '更新の確認はスキップしました（オフラインなど）' }
+# --- デスクトップに「ツール置き場」が無ければ作る ---
+try {
+  $hub = Join-Path ([Environment]::GetFolderPath('Desktop')) 'ツール置き場.url'
+  if (-not (Test-Path $hub)) {
+    [IO.File]::WriteAllText($hub, "[InternetShortcut]`r`nURL=https://nekotenn.github.io/lolbuild/tools.html`r`n", [Text.Encoding]::ASCII)
+    Write-Host 'デスクトップに「ツール置き場」を作りました'
+  }
+} catch {}
 foreach ($c in @('swain', 'tahmkench')) {
   if (-not (Test-Path (Join-Path $dir "data_$c.json"))) {
     Write-Host "初回なので [$c] のデータを取ります。"

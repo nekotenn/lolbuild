@@ -39,6 +39,15 @@ const TOOLS=[
    open:'http://localhost:8765/',openLabel:'PCで開く（ショートカット起動中）',
    how:'デスクトップの「LoLビルド」を押す。データは毎週日曜10時に自動更新（auto_update_on.bat を実行済みの場合）。',
    src:'https://github.com/nekotenn/lolbuild'},
+  {name:'ブラインドでの強さ（先出しできるキャラ）',status:'置き場へ移行待ち',
+   desc:'Lolalyticsの相性データから、どのキャラが先出し（ブラインド）に強いかを順位で出す。縦画面版・使い込むキャラ選び・2体セットつき。',
+   how:'今はPCの blind.bat から起動。次に直すときに、ここへ移して自動アップデート対応にします。'},
+  {name:'LoL用サブモニター画面',status:'置き場へ移行待ち',
+   desc:'縦置きサブモニター用。スクロールなし・タブ切り替え。ピック画面は本物のLoLのように左右のチームが並ぶ。',
+   how:'次に直すときに、ここへ移します。'},
+  {name:'ARAM／メイヘム ビルドサイト',status:'置き場へ移行待ち',
+   desc:'ARAM・メイヘム用のビルド参照サイト。スマホ表示・評価軸・ランダムピックの改良を予定。',
+   how:'次に直すときに、ここへ移します。'},
 ];
 document.getElementById('list').innerHTML=TOOLS.map(t=>`<section class="tool">
   <h2>${t.name}<span class="st${t.status==='使用中'?'':' wip'}">${t.status}</span></h2>
