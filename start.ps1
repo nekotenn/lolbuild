@@ -7,14 +7,21 @@ try {
   $RAW = 'https://raw.githubusercontent.com/nekotenn/lolbuild/main/'
   $wc = New-Object Net.WebClient; $wc.Encoding = [Text.Encoding]::UTF8
   $files = ($wc.DownloadString($RAW + 'files.txt') -split "`r?`n") | Where-Object { $_ -match '^[\w.-]+$' }
-  $n = 0
+  $n = 0; $selfChanged = $false
   foreach ($f in $files) {
     $tmp = Join-Path $dir ($f + '.new')
     $wc.DownloadFile($RAW + $f + '?t=' + [DateTime]::Now.Ticks, $tmp)
     $old = Join-Path $dir $f
-    if (-not (Test-Path $old) -or ((Get-FileHash $tmp).Hash -ne (Get-FileHash $old).Hash)) { Move-Item -Force $tmp $old; $n++ } else { Remove-Item $tmp }
+    if (-not (Test-Path $old) -or ((Get-FileHash $tmp).Hash -ne (Get-FileHash $old).Hash)) { Move-Item -Force $tmp $old; $n++; if ($f -eq 'start.ps1') { $selfChanged = $true } } else { Remove-Item $tmp }
   }
   if ($n -gt 0) { Write-Host "最新版に更新しました（$n ファイル）" }
+  # 起動手順そのものが新しくなったら、新しい手順で起動し直す（1回だけ）
+  if ($selfChanged -and -not $env:LB_RESTARTED) {
+    $env:LB_RESTARTED = '1'
+    Write-Host '新しい起動手順で起動し直します'
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $dir 'start.ps1')
+    exit
+  }
 } catch { Write-Host '更新の確認はスキップしました（オフラインなど）' }
 # --- デスクトップに「ツール置き場」が無ければ作る ---
 try {
