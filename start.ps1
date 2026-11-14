@@ -25,8 +25,15 @@ try {
   }
 } catch {}
 foreach ($c in @('swain', 'tahmkench')) {
-  if (-not (Test-Path (Join-Path $dir "data_$c.json"))) {
-    Write-Host "初回なので [$c] のデータを取ります。"
+  $df = Join-Path $dir "data_$c.json"
+  $old = $false
+  if (Test-Path $df) {
+    $head = (Get-Content $df -TotalCount 1 -Encoding UTF8)
+    if ($head.Length -gt 300) { $head = $head.Substring(0, 300) }
+    $old = (-not $head.Contains('"tier"')) -or (-not (Test-Path (Join-Path $dir "data_$c.js"))) -or ((Get-Item $df).LastWriteTime -lt (Get-Date).AddDays(-8))
+  }
+  if (-not (Test-Path $df) -or $old) {
+    Write-Host "[$c] のデータを新しく取ります（数分）。"
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $dir 'fetch.ps1') -Champ $c
   }
 }
