@@ -2,59 +2,79 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ツール置き場</title>
 <style>
-:root{--bg:#1a1d24;--panel:#232733;--line:#343a48;--text:#e9e3d6;--mute:#8f97a6;--accent:#b8293f;--ok:#6fae78;--gold:#c9a24a}
-@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f4f2ee;--panel:#ffffff;--line:#ddd8cf;--text:#23262e;--mute:#6b7280}}
-:root[data-theme="dark"]{--bg:#1a1d24;--panel:#232733;--line:#343a48;--text:#e9e3d6;--mute:#8f97a6}
+:root{--bg:#1a1d24;--panel:#232733;--line:#343a48;--text:#e9e3d6;--mute:#8f97a6;--accent:#b8293f;--ok:#6fae78;--gold:#c9a24a;--blue:#7fb6e8}
+@media (prefers-color-scheme: light){:root{--bg:#f4f2ee;--panel:#ffffff;--line:#ddd8cf;--text:#23262e;--mute:#6b7280}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:"BIZ UDPGothic","Yu Gothic UI","Hiragino Sans","Meiryo",sans-serif;line-height:1.55}
-.wrap{max-width:720px;margin:0 auto;padding:22px 16px 48px}
-h1{font-size:22px;margin:0 0 4px}
-.sub{color:var(--mute);font-size:13px;margin-bottom:20px}
-.tool{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:10px;padding:14px;margin-bottom:12px}
-.tool h2{font-size:17px;margin:0 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.st{font-size:11px;font-weight:400;border:1px solid currentColor;border-radius:9px;padding:0 7px;color:var(--ok)}
-.st.wip{color:var(--gold)}
-.tool p{margin:4px 0 10px;font-size:14px}
-.links{display:flex;gap:8px;flex-wrap:wrap}
-.links a{font-size:13px;color:var(--text);text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:6px 10px}
-.links a.main{border-color:var(--accent)}
-.links a:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-.how{font-size:12px;color:var(--mute);margin-top:8px}
+.wrap{max-width:760px;margin:0 auto;padding:20px 14px calc(40px + env(safe-area-inset-bottom))}
+h1{font-size:22px;margin:0 0 2px}
+.sub{color:var(--mute);font-size:13px;margin-bottom:14px}
+.tabs{display:flex;gap:6px;margin:0 0 14px;position:sticky;top:0;background:var(--bg);padding:6px 0;z-index:2}
+.tabs button{flex:1;font:inherit;font-size:14px;padding:10px 6px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer}
+.tabs button[aria-pressed=true]{border-color:var(--accent);background:var(--accent);color:#fff}
+h2{font-size:15px;margin:18px 0 8px;color:var(--mute);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+a.main{color:inherit;text-decoration:none}a.main::after{content:'';position:absolute;inset:0;border-radius:10px}
+.card{position:relative;color:var(--text);background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--c,var(--accent));border-radius:10px;padding:12px 12px 10px;min-height:96px}
+a.main:focus-visible::after,.card:hover{outline:2px solid var(--gold);outline-offset:1px}
+.t{font-size:16px;font-weight:700;display:flex;gap:6px;align-items:center}
+.d{font-size:13px;color:var(--mute);margin-top:4px}
+.where{display:inline-block;font-size:11px;margin-top:8px;padding:1px 7px;border-radius:9px;border:1px solid currentColor}
+.web{color:var(--ok)}.claude{color:var(--blue)}.pc{color:var(--gold)}
+.alt{font-size:12px;margin-top:6px}
+.alt a{color:var(--mute);position:relative;z-index:1}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>ツール置き場</h1>
-  <div class="sub">作ったツールの一覧。PCで動くものは、デスクトップのショートカットを押すと自動で最新版になります。</div>
+  <div class="sub">押すとそのまま開きます。<span class="where web">Web</span> は普通のサイト（スマホ・Braveで開ける／データの読み込み・貼り付けOK）、<span class="where claude">Claude</span> はClaudeの中で開きます。</div>
+  <div class="tabs" role="group" aria-label="分類">
+    <button data-g="all" aria-pressed="true">すべて</button>
+    <button data-g="data" aria-pressed="false">データ調査</button>
+    <button data-g="game" aria-pressed="false">試合中</button>
+    <button data-g="doc" aria-pressed="false">ガイド・メモ</button>
+  </div>
   <div id="list"></div>
 </div>
 <script>
-// ツールを足すときは、ここに1行足すだけ
+// ツールを足すときは、ここに1行足すだけ（where: web / claude）
+const BASE='https://nekotenn.github.io/lolbuild/';
+const GROUPS={data:'データ調査（よく使う）',game:'試合中の画面',doc:'ガイド・メモ'};
 const TOOLS=[
-  {name:'LoLビルド（スウェイン・タムケンチ）',status:'使用中',
-   desc:'敵5人からボットのビルドを出す。タンク／通常の切り替え、変わり種、重傷、ルーン比較。ピックを自動で読む。',
-   open:'http://localhost:8765/',openLabel:'PCで開く（ショートカット起動中）',
-   how:'デスクトップの「LoLビルド」を押す。データは毎週日曜10時に自動更新（auto_update_on.bat を実行済みの場合）。',
-   src:'https://github.com/nekotenn/lolbuild'},
-  {name:'ブラインドでの強さ（先出しできるキャラ）',status:'置き場へ移行待ち',
-   desc:'Lolalyticsの相性データから、どのキャラが先出し（ブラインド）に強いかを順位で出す。縦画面版・使い込むキャラ選び・2体セットつき。',
-   how:'今はPCの blind.bat から起動。次に直すときに、ここへ移して自動アップデート対応にします。'},
-  {name:'LoL用サブモニター画面',status:'置き場へ移行待ち',
-   desc:'縦置きサブモニター用。スクロールなし・タブ切り替え。ピック画面は本物のLoLのように左右のチームが並ぶ。',
-   how:'次に直すときに、ここへ移します。'},
-  {name:'ARAM／メイヘム ビルドサイト',status:'置き場へ移行待ち',
-   desc:'ARAM・メイヘム用のビルド参照サイト。スマホ表示・評価軸・ランダムピックの改良を予定。',
-   how:'次に直すときに、ここへ移します。'},
+  {g:'data',name:'ブラインド強さ順位',icon:'🎯',where:'web',url:BASE+'blind/',
+   desc:'先出しに強いキャラの順位。正規版の列つき。データ入り（全ランク 11/08）。',
+   alt:[{t:'Claude版',u:'https://claude.ai/artifact/6qMDNYM3XhEPeybYypysSd'}]},
+  {g:'data',name:'スウェイン・タムケンチ ビルド',icon:'🦅',where:'web',url:BASE,
+   desc:'敵5人からボットのビルドを出す。Web版はデータを貼り付けると使えます。',
+   alt:[{t:'PC版（自動読み取りつき）',u:'http://localhost:8765/'}]},
+  {g:'game',name:'スウェイン 縦画面',icon:'🖥️',where:'claude',url:'https://claude.ai/artifact/X1r2X9YCgRHiKyhybDp35x',
+   desc:'縦サブモニター用。ピック→ロード→試合で自動切り替え。'},
+  {g:'game',name:'ヴェイン試合メモ',icon:'🏹',where:'claude',url:'https://claude.ai/artifact/MBEw9c2CMh7f4y7T7nUbAJ',
+   desc:'相手ボットとゲーム内時計に合わせる対面ボード。'},
+  {g:'game',name:'オラフ top 早見カード',icon:'🪓',where:'claude',url:'https://claude.ai/artifact/5jsU2GyPrS5fztrVa6M7Ev',
+   desc:'弟向けのオラフ早見カード。'},
+  {g:'doc',name:'スウェイン究極ガイド',icon:'📄',where:'claude',url:'https://claude.ai/artifact/9vcbJiZPz7JfqDuWfGFdRb',desc:'ボット心の鋼／ミッド。'},
+  {g:'doc',name:'ヴェイン集団戦ガイド',icon:'📄',where:'claude',url:'https://claude.ai/artifact/95hJaprWnaJrGSVHBpFgKK',desc:'自分用。'},
+  {g:'doc',name:'スウェイン変わり種 設計書',icon:'📄',where:'claude',url:'https://claude.ai/artifact/S8bQffPCGS6NJZBCdTXkQN',desc:'変わり種ビルド探しの設計。'},
+  {g:'doc',name:'ミューズ調査ノート',icon:'📝',where:'claude',url:'https://claude.ai/artifact/2i13FkHi3UAthMdhwGAP9g',desc:'ミューズに調べてもらった結果。'},
 ];
-document.getElementById('list').innerHTML=TOOLS.map(t=>`<section class="tool">
-  <h2>${t.name}<span class="st${t.status==='使用中'?'':' wip'}">${t.status}</span></h2>
-  <p>${t.desc}</p>
-  <div class="links">${t.open?`<a class="main" href="${t.open}">${t.openLabel||'開く'}</a>`:''}${t.src?`<a href="${t.src}">中身（GitHub）</a>`:''}</div>
-  ${t.how?`<div class="how">${t.how}</div>`:''}
-</section>`).join('');
+const WH={web:'Web',claude:'Claude',pc:'PC'};
+let G='all';try{G=localStorage.getItem('hubG')||'all'}catch(e){}
+function card(t){return `<div class="card" style="--c:${t.where==='web'?'var(--ok)':'var(--blue)'}">
+  <a class="main" href="${t.url}" target="_blank" rel="noopener"><div class="t">${t.icon} ${t.name}</div></a><div class="d">${t.desc}</div>
+  <span class="where ${t.where}">${WH[t.where]}で開く</span>
+  ${t.alt?`<div class="alt">${t.alt.map(a=>`<a href="${a.u}" target="_blank" rel="noopener">${a.t}</a>`).join(' ・ ')}</div>`:''}</div>`}
+function render(){
+  document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.g===G));
+  const gs=G==='all'?Object.keys(GROUPS):[G];
+  document.getElementById('list').innerHTML=gs.map(g=>`<h2>${GROUPS[g]}</h2><div class="grid">${TOOLS.filter(t=>t.g===g).map(card).join('')}</div>`).join('');
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{G=b.dataset.g;try{localStorage.setItem('hubG',G)}catch(e){}render()});
+render();
 </script>
 </body>
 </html>

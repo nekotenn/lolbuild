@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ブラインド強さ順位</title>
+<style>
+:root{--bg:#0b1118;--panel:#121b26;--line:#22303f;--txt:#e7edf3;--sub:#8a9bb0;--gold:#c8aa6e;--good:#3fc28a;--bad:#e5544b;--mid:#e0a23b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:"Segoe UI","Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:14px}
+header{position:sticky;top:0;z-index:5;background:linear-gradient(#0d1620,#0b1118);border-bottom:1px solid var(--line);padding:10px 16px}
+h1{margin:0 0 8px;font-size:18px;color:var(--gold);letter-spacing:.05em}
+h1 small{color:var(--sub);font-weight:400;font-size:12px;margin-left:8px}
+.bar{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
+select{background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:5px 8px;font-size:13px}
+.tabs{display:flex;gap:4px}
+.tabs button{background:var(--panel);color:var(--sub);border:1px solid var(--line);border-radius:6px;padding:5px 11px;cursor:pointer;font-weight:600}
+.tabs button.on{color:#0b1118;background:var(--gold);border-color:var(--gold)}
+label.sl{display:flex;align-items:center;gap:6px;color:var(--sub);font-size:12px}
+label.sl b{color:var(--txt);min-width:38px;font-size:13px}
+input[type=range]{width:110px;accent-color:var(--gold)}
+.vsbox{display:flex;gap:6px;color:var(--sub);font-size:12px;align-items:center}
+.vsbox #vsc{display:flex;gap:8px}
+.vsbox label{display:flex;gap:3px;align-items:center;color:var(--txt)}
+.wrap{padding:10px 16px 40px;overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:900px}
+th{position:sticky;top:0;background:#0f1822;color:var(--sub);font-size:12px;font-weight:600;text-align:right;padding:7px 8px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none}
+th.l{text-align:left}
+th.on{color:var(--gold)}
+td{padding:5px 8px;border-bottom:1px solid #18222e;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+td.l{text-align:left}
+tr:hover td{background:#152130}
+.ch{display:flex;align-items:center;gap:8px;font-weight:600}
+.ch img{width:28px;height:28px;border-radius:50%;border:1px solid var(--line)}
+.lane{color:var(--sub);font-size:12px}
+.score{font-weight:700;font-size:15px}
+.rank{color:var(--sub);width:34px}
+.top3 .rank{color:var(--gold);font-weight:700}
+.few td{opacity:.45}
+.tag{font-size:10px;color:var(--mid);border:1px solid var(--mid);border-radius:4px;padding:0 4px;margin-left:6px}
+.cell{display:inline-block;min-width:44px;padding:1px 5px;border-radius:4px}
+.empty{padding:60px 20px;text-align:center;color:var(--sub);line-height:2}
+.note{color:var(--sub);font-size:12px;margin-top:6px}
+</style></head><body>
+<style>
+.bar2{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)}
+.views button{background:var(--panel);color:var(--sub);border:1px solid var(--line);border-radius:6px;padding:5px 11px;cursor:pointer;font-weight:600}
+.views button.on{color:#0b1118;background:#7fb6e8;border-color:#7fb6e8}
+th.nw{color:#7fb6e8}
+td.nw{background:rgba(127,182,232,.06)}
+.ms{font-weight:700;font-size:15px;color:#cfe4f7}
+.ctr{color:var(--sub);font-size:12px}
+.ban{color:var(--good);font-size:12px}
+.ret.hi{color:var(--bad);font-weight:700}
+.ret.lo{color:var(--good)}
+.pool{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+.pool button{display:flex;align-items:center;gap:5px;background:var(--panel);color:var(--sub);border:1px solid var(--line);border-radius:16px;padding:3px 9px 3px 3px;cursor:pointer;font-size:12px}
+.pool button img{width:22px;height:22px;border-radius:50%}
+.pool button.on{color:var(--txt);border-color:var(--gold);background:#2a2416}
+.pairhead{color:var(--sub);font-size:13px;line-height:1.8;margin:4px 0}
+.pairhead b{color:var(--txt)}
+.ch.sim{cursor:pointer}
+.trow{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--row)}
+.tfaces{display:flex;flex-wrap:wrap;gap:6px}
+.tface{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;width:62px;background:none;border:1px solid transparent;border-radius:8px;padding:3px 2px;cursor:pointer;color:var(--txt);font-size:10.5px}
+.tface img{width:44px;height:44px;border-radius:8px;border:1px solid var(--line)}
+.tface span{max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tface.on{border-color:var(--gold);background:var(--panel)}
+.tface .tlate{position:absolute;top:0;right:4px;font-style:normal;font-size:10px;background:#e0a23b;color:#0b1118;border-radius:4px;padding:0 3px}
+.tdet{display:flex;gap:10px;align-items:flex-start;margin:4px 0 8px 42px;padding:8px 10px;background:var(--panel);border:1px solid var(--line);border-radius:8px;font-size:12.5px;line-height:1.7}
+.tdet img{width:48px;height:48px;border-radius:8px}
+img.fc{width:18px;height:18px;border-radius:50%;vertical-align:-4px;margin-right:2px;border:1px solid var(--line)}
+.bname .ch img{width:30px!important;height:30px!important}
+.axisnote{color:var(--sub);font-size:11.5px;margin:-2px 0 6px}
+/* 縦画面（帯）表示 */
+#setBtn,#cmpWrap{display:none}
+body.compact #setBtn{display:inline-block}
+body.compact header{padding:8px 10px}
+body.compact:not(.open) .bar:first-of-type > *:not(#tabs):not(#set){display:none}
+body.compact:not(.open) .bar2 > *:not(#views):not(#setBtn):not(#cmpWrap2):not(#helpbtn){display:none}
+body.compact:not(.open) .note{display:none}
+body.compact .wrap{padding:6px 8px 40px}
+body.compact table{min-width:0;font-size:12px}
+body.compact th,body.compact td{padding:4px 5px}
+.bandhead{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;color:var(--sub);font-size:12px;margin:2px 0 8px}
+.bandhead select{font-size:12px;padding:3px 6px}
+.lg{display:inline-flex;align-items:center;gap:4px}
+.brow{display:grid;grid-template-columns:26px minmax(118px,34%) 1fr 54px;gap:6px;align-items:center;padding:5px 2px;border-bottom:1px solid #18222e;cursor:pointer}
+.brow:hover{background:#152130}
+.brow.few{opacity:.45}
+.brow .rk{color:var(--sub);text-align:right;font-size:12px}
+.brow.top3 .rk{color:var(--gold);font-weight:700}
+.bname{min-width:0}
+.bname .ch{gap:6px;font-size:13px}
+.bname .ch img{width:24px;height:24px}
+.bsub{display:flex;gap:3px;align-items:center;margin-top:2px;font-size:10.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sq{display:inline-block;width:9px;height:9px;border-radius:2px;border:1px solid #2a3846}
+.band{position:relative;height:22px}
+.band .ax{position:absolute;top:10px;left:0;right:0;height:1px;background:#22303f}
+.band .rg{position:absolute;top:8px;height:5px;border-radius:3px;background:linear-gradient(90deg,rgba(229,84,75,.75),rgba(127,182,232,.35))}
+.band .mk{position:absolute;top:2px;transform:translateX(-50%);font-size:12px;line-height:18px}
+.band .mid{position:absolute;top:0;bottom:0;width:1px;background:#3a4756;border-left:1px dashed #3a4756}
+.bval{text-align:right;font-weight:700;font-size:14px;color:#cfe4f7}
+.bdet{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:3px 12px;padding:6px 8px 8px 32px;font-size:12px;color:var(--sub);background:#0f1822;border-radius:6px}
+.bdet b{color:var(--txt);font-weight:600}
+/* 使い込む */
+.mlane{margin:10px 0 16px}
+.mlane h3{margin:0 0 6px;font-size:14px;color:var(--gold)}
+.mrow{display:grid;grid-template-columns:30px minmax(120px,30%) 1fr auto;gap:8px;align-items:center;padding:5px 4px;border-bottom:1px solid #18222e}
+.tier{font-weight:800;font-size:15px;text-align:center;border-radius:5px;padding:1px 0}
+.tS{background:#c8aa6e;color:#0b1118}.tA{background:#3fc28a;color:#0b1118}.tB{background:#7fb6e8;color:#0b1118}.tC{background:#3a4756;color:#e7edf3}
+.why{font-size:12px;color:var(--sub);line-height:1.5}
+.why b{color:var(--txt)}
+.fb button{background:var(--panel);border:1px solid var(--line);color:var(--sub);border-radius:6px;padding:2px 7px;cursor:pointer;font-size:12px;margin-left:3px}
+.fb button.on1{border-color:var(--good);color:var(--good)}.fb button.on2{border-color:var(--bad);color:var(--bad)}
+.pick3{outline:1px solid var(--gold);outline-offset:-1px;border-radius:6px}
+.likebox{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 8px}
+.likebox button{display:flex;align-items:center;gap:4px;background:var(--panel);color:var(--sub);border:1px solid var(--line);border-radius:14px;padding:2px 8px 2px 2px;cursor:pointer;font-size:11.5px}
+.likebox button img{width:20px;height:20px;border-radius:50%}
+.likebox button.lk{border-color:var(--good);color:var(--txt);background:#11261d}
+.likebox button.dl{border-color:var(--bad);color:var(--txt);background:#2a1514}
+.srch{background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:12px;width:150px}.ch.sim:hover{color:var(--gold)}
+.tag.late{color:#e0a23b;border-color:#e0a23b;cursor:help}
+.help{display:none;margin-top:8px;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:8px;font-size:12.5px;line-height:1.75;color:var(--txt)}
+.help.on{display:block}
+.help b{color:var(--gold)}
+.help .bl{color:#7fb6e8}
+.helpbtn{background:var(--panel);color:var(--gold);border:1px solid var(--gold);border-radius:6px;padding:5px 11px;cursor:pointer;font-weight:600}
+.pre{color:var(--sub);font-size:12px}
+.vsbox.dis label{opacity:.35}
+.help2{color:var(--good)}
+</style>
+<header>
+  <h1>ブラインド強さ順位<small id="meta"></small></h1>
+  <div class="bar">
+    <select id="set"></select>
+    <div class="tabs" id="tabs"></div>
+    <label class="sl">相性の最低試合数<input type="range" id="mg" min="100" max="3000" step="100" value="200"><b id="mgv"></b></label>
+    <label class="sl">キャラの最低試合数<input type="range" id="cg" min="0" max="20000" step="500" value="2000"><b id="cgv"></b></label>
+    <label class="sl">カウンター基準<input type="range" id="th" min="1" max="5" step="0.5" value="2"><b id="thv"></b></label>
+    <label class="sl">相手のプール体数<input type="range" id="np" min="3" max="15" step="1" value="7"><b id="npv"></b></label>
+    <label class="sl"><input type="checkbox" id="pre" checked> レーン別のおすすめで数える</label>
+    <div class="vsbox" id="vsbox">数える敵：<span id="vsc"></span></div>
+    <label class="sl"><input type="checkbox" id="hide"> 少試合を隠す</label>
+  </div>
+  <div class="bar bar2">
+    <div class="views" id="views"></div>
+    <label class="sl"><input type="checkbox" id="shr" checked> 少試合補正</label>
+    <label class="sl"><input type="checkbox" id="meas" checked> 返され率は実測を使う</label>
+    <label class="sl" id="alWrap">相手が返してくる確率<input type="range" id="al" min="0" max="100" step="5" value="40"><b id="alv"></b></label>
+    <label class="sl"><input type="checkbox" id="rd" checked> レーンの読めなさを入れる</label>
+    <label class="sl" id="allyWrap"><input type="checkbox" id="ally" checked> 味方の助けを入れる</label>
+    <label class="sl" id="beWrap">味方が合わせてくれる確率<input type="range" id="be" min="0" max="100" step="5" value="30"><b id="bev"></b></label>
+    <button class="helpbtn" id="helpbtn">？ 見方</button>
+    <button class="helpbtn" id="setBtn">⚙ 設定</button>
+    <label class="sl" id="cmpWrap2"><input type="checkbox" id="cmp"> 縦画面表示</label>
+    <label class="sl" id="pfWrap">自分が先に選ぶ確率<input type="range" id="pf" min="0" max="100" step="10" value="50"><b id="pfv"></b></label>
+  </div>
+  <div class="note" id="note"></div>
+  <div class="help" id="help">
+    <b>白い列（元の計算）</b>　ブラインド強さ＝勝率 −（カウンターされる確率 × 下がり幅）。相手は人気どおりに適当に選ぶ前提。<br>
+    <b class="bl">相手モデル強さ</b>　相手が「返してくる確率」で、手持ちの中から一番痛いキャラを出してくる前提の期待勝率。返してくる確率は、ふだんは実測から自動で決まる。<br>
+    <b class="bl">味方込み強さ</b>　相手モデル強さ ＋ 味方の助け。チェック「味方の助けを入れる」を外すと相手モデル強さと同じになる。<br>
+    <b class="bl">最悪の返し</b>　相手が毎回、一番痛いキャラを出してきたときの期待勝率。ハードカウンターがあるキャラほど大きく下がる。<br>
+    <b class="bl">一番痛い対面</b>　対面で一番刺さる相手と、その下がり幅（%）。<br>
+    <b class="bl">実測の返され率</b>　天敵との対戦が、人気から予想されるより何倍多いか。×1.5なら実際に1.5倍返されている。<br>
+    <b class="bl">味方の助け</b>　①後から選ぶ味方が相性のいいキャラを出してくれる伸びしろ ＋ ②カウンターされたとき、後ろの味方（TOP・MIDはJG、BOTはSUP）が天敵に強いキャラで取り返せる量。カーソルで内訳と、相性のいい相方の名前が出る。<br>
+    <b class="bl">BANするなら</b>　自分がBANすると一番得をする1体と、上がり幅。<br>
+    <b style="color:#e0a23b">後出し寄り</b>の印　天敵と人気ほど当たっていないキャラ。後から選ばれることが多く、勝率が盛られている可能性がある。数字は自動では下げていない。<br>
+    <b class="bl">人気どおり勝率</b>　天敵とも人気どおりに当たっていたらの勝率。後出しで天敵を避けて盛られた分を戻した数字。横の小さい数字が今の勝率との差。<br>
+    <b>Tier</b>　最初に開く画面。おすすめ設定で固定した先出しのTier表。点数＝味方込み強さ×0.75＋最悪の返し×0.25で、レーン平均との差でS/A/B/Cに分ける。<br>
+    <b>使い込む</b>　レーンごとのティア表。好きなキャラ・苦手なキャラを選ぶと、同じ相手に強くて弱い＝遊び方が似ているキャラが上がる。「よかった／微妙」で好みが育つ。<br>
+    <b>縦画面表示</b>　縦長のモニター向け。勝率系の数字を1本の帯にまとめて横スクロールをなくす。行を押すと数字が全部出る。⚙で設定を開く。<br>
+    <b>2体セット</b>　「同じレーンで2体」は先出し用＋返し用。「デュオ」はBOT＋SUPのように2レーンの組み合わせで、1体目を押すと自動で2体目の選択に進む。<br>
+    <b>試しに引く</b>　キャラ名を押すか、上の「試しに引く」で開く。敵と味方を何千回も引いて、勝率の幅と、よく来る天敵を見せる。<br>
+    <b>答え合わせ</b>　データが2回分たまると使える。前のデータで後の相性を当てられたか、順位や返され率が続くかを採点する。<br>
+    <b>レーン別のおすすめで数える</b>　TOP＝対面TOP／JG＝敵全員／MID＝対面MID＋敵JG／BOT＝敵BOT＋敵SUP／SUP＝敵BOT＋敵SUP＋敵JG。味方は TOP＝なし／JG＝全員／MID＝JG／BOT＝SUP／SUP＝BOT＋JG。外すと「数える敵」を自分で選べる。
+  </div>
+</header>
+<div class="wrap" id="wrap"></div>
+<script src="data.js"></script>
+<script>
+const LANES=['top','jungle','middle','bottom','support'];
+const LJ={top:'TOP',jungle:'JG',middle:'MID',bottom:'BOT',support:'SUP'};
+const $=id=>document.getElementById(id);
+const sets=window.DATASETS||[];
+const st={set:0,lane:'all',sort:'score',asc:false,view:'tier',vs:{top:true,jungle:true,middle:true,bottom:true,support:true}};
+const odds=p=>p/(1-p), prob=o=>o/(1+o);
+// レーン別のおすすめ（元の動画の分析より）
+const PRE_E={top:['top'],jungle:['top','jungle','middle','bottom','support'],middle:['middle','jungle'],bottom:['bottom','support'],support:['bottom','support','jungle']};
+const PRE_A={top:[],jungle:['top','middle','bottom','support'],middle:['jungle'],bottom:['support'],support:['bottom','jungle']};
+const HELPER={top:'jungle',middle:'jungle',bottom:'support'};
+let POOL={};try{POOL=JSON.parse(localStorage.getItem('blindPool')||'{}')||{}}catch(e){POOL={}}
+function savePool(){try{localStorage.setItem('blindPool',JSON.stringify(POOL))}catch(e){}}
+const NOTE_RANK='白い列は元の計算、青い列は新しい計算。各列の意味は「？ 見方」。数字にカーソルを乗せると内訳が出ます。';
+const NOTE_PAIR='2体セット：先に選ぶときは2体のうちブラインドに強い方を出し、後に選ぶときは対面を見て2体のうち勝てる方を出す前提の期待勝率。下の丸ボタンで自分が使えるキャラを選ぶと、その中だけで組みます（2体以上選んだとき）。';
+
+// ---- 人気（各レーンでの試合数） ----
+const popCache=new Map();
+function popIndex(S){
+  if(popCache.has(S))return popCache.get(S);
+  const g={};for(const l of LANES)g[l]={};
+  for(const c of S.champs)for(const ln in c.lanes){const r=(c.lanes[ln].vs||{})[ln];if(!r)continue;g[ln][c.name]=r.reduce((s,x)=>s+x[3],0)}
+  popCache.set(S,g);return g;
+}
+
+// ---- 相性の下ごしらえ（期待勝率との差、少試合補正） ----
+function prep(L,A,minG,shrink){
+  if(!L)return null;
+  const rows=L.filter(r=>r[3]>=minG);
+  const G=rows.reduce((s,r)=>s+r[3],0);
+  if(!G)return null;
+  const B=rows.reduce((s,r)=>s+r[2]*r[3],0)/G;
+  const oA=odds(A/100),oB=odds(B/100);
+  const it=[];let mean=0,noise=0;
+  for(const r of rows){
+    const w=r[3]/G,p=r[1]/100;
+    const E=prob(oA*odds(r[2]/100)/oB);
+    const d=(p-E)*100,s2=p*(1-p)/r[3]*1e4;
+    it.push({name:r[0],n:r[3],w,E,d,dr:d,s2});mean+=w*d;noise+=w*s2;
+  }
+  let v=0;for(const x of it)v+=x.w*(x.dr-mean)**2;
+  const tau2=Math.max(0,v-noise);
+  // ロールごとに平均を0にそろえる（ずれた分が足し算に混ざらないように）
+  // 少試合補正（制限付き）：ブレは平均に寄せるが、寄せる幅は誤差1つ分まで。強い相性・ハードカウンターは消さない
+  for(const x of it){x.dr=x.dr-mean;if(!shrink){x.d=x.dr;continue}
+    const k=(tau2+x.s2)>0?tau2/(tau2+x.s2):0,se=Math.sqrt(x.s2);let v=x.dr*k;
+    if(Math.abs(v-x.dr)>se)v=x.dr-Math.sign(x.dr)*se;
+    if(Math.sign(v)!==Math.sign(x.dr))v=0;x.d=v}
+  return {it,G,sd:Math.sqrt(tau2),mean};
+}
+
+// ---- 今の計算（そのまま） ----
+function oldCalc(P,thr,n){
+  let cs=0,cd=0;
+  for(const x of P.it)if(x.d<=-thr){cs+=x.w;cd+=x.w*x.d}
+  const drop=cs?-cd/cs:0,Pr=1-Math.pow(1-cs,n);
+  return {P:Pr,drop,loss:Pr*drop,share:cs,sd:P.sd,games:P.G};
+}
+
+// ---- 正規版（数えずに、本当のばらつきの正規分布の端の面積で出す） ----
+function Phi(x){const t=1/(1+0.3275911*Math.abs(x)/Math.SQRT2),y=1-((((1.061405429*t-1.453152027)*t+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x/2);return x>=0?(1+y)/2:(1-y)/2}
+function normCalc(P,thr,n){
+  const sd=P.sd;if(!(sd>0))return {P:0,drop:0,loss:0,share:0,sd:0,games:P.G};
+  const z=thr/sd,share=Phi(-z),phi=Math.exp(-z*z/2)/Math.sqrt(2*Math.PI);
+  const drop=share>1e-9?sd*phi/share:thr,Pr=1-Math.pow(1-share,n);
+  return {P:Pr,drop,loss:Pr*drop,share,sd,games:P.G};
+}
+
+// ---- 相手モデル：手持ちn体（人気で決まる）から一番痛いのを出す／適当に出す ----
+function model(P,popL,thr,n,excl){
+  const it=(excl?P.it.filter(x=>x.name!==excl):P.it).map(x=>({...x}));
+  if(!it.length)return null;
+  let U=0;for(const x of it){x.u=popL[x.name]||0;U+=x.u}
+  if(U>0)for(const x of it)x.u/=U;else{const W=it.reduce((s,x)=>s+x.w,0);for(const x of it)x.u=x.w/W}
+  let Er=0,csP=0,csO=0,Wo=0;
+  for(const x of it){Er+=x.u*x.d;Wo+=x.w}
+  for(const x of it)if(x.d<=-thr){csP+=x.u;csO+=x.w/Wo}
+  const sorted=[...it].sort((a,b)=>a.d-b.d);
+  let cum=0,Em=0;
+  for(const x of sorted){const a=Math.pow(Math.max(0,1-cum),n),b=Math.pow(Math.max(0,1-cum-x.u),n);x.pm=a-b;Em+=x.pm*x.d;cum+=x.u}
+  const Pc=1-Math.pow(1-csP,n);
+  const aMeas=(Pc-csP)>1e-4?Math.max(0,Math.min(1,(csO-csP)/(Pc-csP))):0;
+  return {Er,Em,csP,csO,ratio:csP>0.002?csO/csP:null,aMeas,top:sorted[0],sorted};
+}
+
+// 手持ちn体の中で一番いい（dが大きい）キャラを出したときの期待値
+function bestOf(P,popL,n){
+  const it=P.it;if(!it.length)return null;
+  let U=0;for(const x of it){x.u=popL[x.name]||0;U+=x.u}
+  if(U>0)for(const x of it)x.u/=U;else{const W=it.reduce((s,x)=>s+x.w,0);for(const x of it)x.u=x.w/W}
+  let Er=0;for(const x of it)Er+=x.u*x.d;
+  const sorted=[...it].sort((a,b)=>b.d-a.d);let cum=0,Ex=0;
+  for(const x of sorted){const a=Math.pow(Math.max(0,1-cum),n),b=Math.pow(Math.max(0,1-cum-x.u),n);Ex+=(a-b)*x.d;cum+=x.u}
+  const worst=[...it].sort((a,b)=>a.d-b.d);
+  return {Er,Ex,best:sorted.filter(x=>x.d>0).slice(0,3),bad:worst.filter(x=>x.d<0).slice(0,2)};
+}
+// 後ろの味方の「天敵への答え」：ロールRの人気上位12体が、レーンlnの相手Yにどれだけ強いか（一番強いもの）
+const ansCache=new Map();
+function answers(S,o,R,ln){
+  const key=[S.label,R,ln,o.minG,o.shr].join('|');if(ansCache.has(key))return ansCache.get(key);
+  const cands=[];
+  for(const c of S.champs){const L=c.lanes[R];if(!L||!L.vs)continue;const same=L.vs[R];if(!same||!same.length)continue;
+    const G=same.reduce((s,r)=>s+r[3],0);const A=same.reduce((s,r)=>s+r[1]*r[3],0)/G;cands.push({c,L,G,A})}
+  cands.sort((a,b)=>b.G-a.G);
+  const map={};
+  for(const k of cands.slice(0,12)){const P=prep(k.L.vs[ln],k.A,o.minG,o.shr);if(!P)continue;
+    for(const x of P.it){if(!(x.name in map)||x.d>map[x.name].d)map[x.name]={d:x.d,by:k.c.name}}}
+  ansCache.set(key,map);return map;
+}
+
+function settings(){
+  return {minG:+$('mg').value,thr:+$('th').value,n:+$('np').value,cg:+$('cg').value,
+    shr:$('shr').checked,meas:$('meas').checked,al:+$('al').value/100,rd:$('rd').checked,pf:+$('pf').value/100,
+    pre:$('pre').checked,ally:$('ally').checked,be:+$('be').value/100};
+}
+
+function evalLane(c,ln,S,o,pop){
+  const lane=c.lanes[ln],same=lane.vs[ln]||[];
+  const G=same.reduce((s,r)=>s+r[3],0);if(!G)return null;
+  const A=same.reduce((s,r)=>s+r[1]*r[3],0)/G;
+  const tot=LANES.reduce((s,l)=>s+((c.lanes[l]&&c.lanes[l].share)||0),0);
+  const readS=o.rd&&lane.share&&tot>0?Math.min(1,lane.share/tot):1;
+  const cnt=o.pre?PRE_E[ln]:LANES.filter(v=>st.vs[v]);
+  const inE=v=>cnt.includes(v);
+  const per={},perN={},mod={},prp={};let loss=0,notP=1,lossN=0,notPN=1;
+  for(const v of LANES){
+    const P=prep(lane.vs[v],A,o.minG,o.shr);prp[v]=P;
+    per[v]=P?oldCalc(P,o.thr,o.n):null;
+    mod[v]=P?model(P,pop[v],o.thr,o.n):null;
+    perN[v]=P?normCalc(P,o.thr,o.n):null;
+    if(per[v]&&inE(v)){loss+=per[v].loss;notP*=1-per[v].P;lossN+=perN[v].loss;notPN*=1-perN[v].P}
+  }
+  const msOf=(m,v)=>{const a=(o.meas?m.aMeas:o.al)*readS;return a*m.Em+(1-a)*m.Er};
+  let ms=A,worst=A;
+  for(const v of LANES){const m=mod[v];if(!m||!inE(v))continue;m.a=(o.meas?m.aMeas:o.al)*readS;m.dv=msOf(m,v);ms+=m.dv;worst+=m.Em}
+  // BAN：一番得をする1体
+  const cand=new Set();
+  for(const v of LANES){const m=mod[v];if(!m||!inE(v))continue;
+    [...m.sorted].sort((a,b)=>(b.pm*-b.d)-(a.pm*-a.d)).slice(0,3).forEach(x=>{if(x.d<0)cand.add(x.name)})}
+  let ban=null;
+  for(const nm of cand){
+    let s=A;
+    for(const v of LANES){if(!prp[v]||!inE(v))continue;const m=model(prp[v],pop[v],o.thr,o.n,nm);if(!m)continue;s+=msOf(m,v)}
+    if(!ban||s-ms>ban.gain)ban={name:nm,gain:s-ms};
+  }
+  const lm=mod[ln];
+  // 味方の助け：①相性のいい味方を出してもらえる伸びしろ ②カウンターされたとき後ろの味方が取り返す量
+  let up=0,rec=0;const upd=[];let recd=null;const hasTeam=!!lane.team;
+  if(o.ally){
+    if(hasTeam)for(const v of PRE_A[ln]){const P=prep(lane.team[v],A,o.minG,o.shr);if(!P)continue;const b=bestOf(P,pop[v],o.n);if(!b)continue;
+      const val=o.be*b.Ex+(1-o.be)*b.Er;up+=val;upd.push({v,val,b})}
+    const R=HELPER[ln];
+    if(R&&lm&&lm.a){const ans=answers(S,o,R,ln);let s=0;const tops=[];
+      for(const x of lm.sorted){if(x.d>=0||x.pm<0.001)continue;const a=ans[x.name];if(a&&a.d>0){s+=x.pm*a.d;tops.push({y:x.name,by:a.by,d:a.d,pm:x.pm})}}
+      rec=lm.a*o.be*s;recd={R,tops:tops.sort((p,q)=>q.pm*q.d-p.pm*p.d).slice(0,3)}}
+  }
+  const help=up+rec;
+  // 人気どおりに相手と当たっていたら（後出しで天敵を避けた分を戻す）
+  let fair=A;for(const v of cnt){const m=mod[v];if(m)fair+=m.Er}
+  const teamP={};if(hasTeam)for(const v of PRE_A[ln]){const P=prep(lane.team[v],A,o.minG,o.shr);if(P)teamP[v]=P}
+  const late=lm&&lm.ratio!=null&&lm.csP>=0.03&&lm.ratio<=0.85;
+  return {c,ln,share:lane.share,A,G,per,perN,mod,loss,P:1-notP,score:A-loss,lossN,PN:1-notPN,scoreN:A-lossN,few:G<o.cg,cnt,help,up,rec,upd,recd,hasTeam,msa:ms+help,late,fair,prp,teamP,readS,
+    ms,worst,readS,ban:ban&&ban.gain>0.005?ban:null,ctr:lm&&lm.top&&lm.top.d<0?lm.top:null,ret:lm?lm.ratio:null,retA:lm?lm.aMeas:null};
+}
+
+function compute(){
+  const S=sets[st.set];if(!S)return[];
+  const o=settings(),pop=popIndex(S),out=[];
+  for(const c of S.champs)for(const ln in c.lanes){
+    if(st.lane!=='all'&&ln!==st.lane)continue;
+    const r=evalLane(c,ln,S,o,pop);if(r)out.push(r);
+  }
+  return out;
+}
+
+const COLS=[
+  {k:'rank',t:'#'},{k:'name',t:'キャラ',l:1},{k:'score',t:'ブラインド強さ'},{k:'scoreN',t:'強さ（正規版）'},{k:'A',t:'勝率'},{k:'loss',t:'削られる合計'},
+  {k:'P',t:'どこかで刺される確率'},{k:'PN',t:'刺される（正規版）'},{k:'G',t:'試合数'},
+  {k:'fair',t:'人気どおり勝率',nw:1},{k:'ms',t:'相手モデル強さ',nw:1},{k:'msa',t:'味方込み強さ',nw:1},{k:'worst',t:'最悪の返し',nw:1},{k:'ctr',t:'一番痛い対面',nw:1,l:1},{k:'ret',t:'実測の返され率',nw:1},{k:'help',t:'味方の助け',nw:1},{k:'ban',t:'BANするなら',nw:1,l:1}
+].concat(LANES.map(v=>({k:'vs_'+v,t:'vs '+LJ[v]})));
+
+function color(x,lo,hi){const t=Math.max(0,Math.min(1,(x-lo)/(hi-lo)));return `rgba(229,84,75,${(Math.round(t*140)/255).toFixed(2)})`}
+let ICONS=window.ICONS||{};
+const N2I={};
+function idOf(S,name){if(!N2I[S.label]){const m={};for(const c of S.champs)m[c.name]=c.id;N2I[S.label]=m}return N2I[S.label][name]||name}
+function img(S,id,cls){const src=ICONS[id]||(S.ddver?`https://ddragon.leagueoflegends.com/cdn/${S.ddver}/img/champion/${id}.png`:'');return src?`<img class="${cls||''}" src="${src}" alt="" loading="lazy" onerror="this.style.display='none'">`:''}
+function face(S,name){return img(S,idOf(S,name),'fc')}
+const nameToId=S=>{const m={};for(const c of S.champs)m[c.name]=c.id;return m};
+
+function renderControls(){
+  $('mgv').textContent=$('mg').value;$('cgv').textContent=(+$('cg').value).toLocaleString();
+  $('thv').textContent='−'+$('th').value+'%';$('npv').textContent=$('np').value+'体';
+  $('alv').textContent=$('al').value+'%';$('pfv').textContent=$('pf').value+'%';
+  $('alWrap').style.opacity=$('meas').checked?.35:1;
+  $('bev').textContent=$('be').value+'%';$('beWrap').style.opacity=$('ally').checked?1:.35;
+  $('vsbox').classList.toggle('dis',$('pre').checked);
+  $('vsc').querySelectorAll('input').forEach(i=>i.disabled=$('pre').checked);
+  $('pfWrap').style.display=st.view==='pair'&&st.pairMode!=='duo'?'flex':'none';
+  $('note').textContent=st.view==='pair'?(st.pairMode==='duo'?'2体セット（デュオ）：BOT＋SUPのように、2レーンの2人を組み合わせた期待勝率。1体目を押すと自動で2体目に進みます。':NOTE_PAIR):st.view==='sim'?'試しに引く：今の設定（返してくる確率・味方が合わせてくれる確率・プール体数）どおりに、敵と味方を何千回もランダムに引いて、勝率の出方を見ます。':st.view==='bt'?'答え合わせ：前のデータで後のデータを当てられたかを採点します。':st.view==='tier'?'Tier：おすすめ設定で固定した先出しのTier表です。迷ったらここだけ見ればOK。':st.view==='main'?'使い込む：レーンごとに、練習するならこのキャラ、をティアで出します。好きなキャラ・苦手なキャラを選ぶと、あなたの好みに近い順に変わります。':NOTE_RANK;
+}
+
+// ---- 試しに引く：このキャラを先出ししたら、どんな敵（と味方）が来るか ----
+function pick(items){let r=Math.random(),c=0;for(const x of items){c+=x.u;if(r<=c)return x}return items[items.length-1]}
+function withU(P,popL){const it=P.it.map(x=>({...x}));let U=0;for(const x of it){x.u=popL[x.name]||0;U+=x.u}
+  if(U>0)for(const x of it)x.u/=U;else{const W=it.reduce((s,x)=>s+x.w,0);for(const x of it)x.u=x.w/W}return it}
+function simOnce(r,o,pop,itE,itA){
+  const parts=[];let wr=r.A;
+  for(const v of r.cnt){const it=itE[v];if(!it)continue;const m=r.mod[v];const a=m&&m.a!=null?m.a:0;
+    let x,how;
+    if(Math.random()<a){let best=null;for(let k=0;k<o.n;k++){const y=pick(it);if(!best||y.d<best.d)best=y}x=best;how='返し'}
+    else{x=pick(it);how='適当'}
+    wr+=x.d;parts.push({side:'敵',v,name:x.name,d:x.d,how})}
+  if(o.ally)for(const v of Object.keys(itA)){const it=itA[v];let x,how;
+    if(Math.random()<o.be){let best=null;for(let k=0;k<o.n;k++){const y=pick(it);if(!best||y.d>best.d)best=y}x=best;how='合わせ'}
+    else{x=pick(it);how='適当'}
+    wr+=x.d;parts.push({side:'味方',v,name:x.name,d:x.d,how})}
+  return {wr,parts};
+}
+function renderSim(S){
+  const o=settings(),pop=popIndex(S);
+  const list=compute().filter(r=>!r.few).sort((a,b)=>b.G-a.G);
+  if(!list.length){$('wrap').innerHTML='<div class="empty">キャラがいません。</div>';return}
+  let r=list.find(x=>x.c.id+'|'+x.ln===st.sim)||list[0];st.sim=r.c.id+'|'+r.ln;
+  const itE={},itA={};
+  for(const v of r.cnt)if(r.prp[v])itE[v]=withU(r.prp[v],pop[v]);
+  if(o.ally)for(const v in r.teamP)itA[v]=withU(r.teamP[v],pop[v]);
+  const N=2000,res=[];for(let i=0;i<N;i++)res.push(simOnce(r,o,pop,itE,itA));
+  const mean=res.reduce((s,x)=>s+x.wr,0)/N;
+  const sorted=res.map(x=>x.wr).sort((a,b)=>a-b);const q=p=>sorted[Math.floor(p*(N-1))];
+  // 天敵がどれくらい来るか
+  const cnt={};for(const x of res)for(const p of x.parts)if(p.side==='敵'&&p.d<=-o.thr){const k=p.v+'|'+p.name;(cnt[k]=cnt[k]||{v:p.v,name:p.name,d:p.d,n:0}).n++}
+  const foes=Object.values(cnt).sort((a,b)=>b.n-a.n).slice(0,5);
+  const hit=res.filter(x=>x.parts.some(p=>p.side==='敵'&&p.d<=-o.thr)).length/N;
+  // ヒストグラム
+  const lo=Math.floor(q(0.01)),hi=Math.ceil(q(0.99));const bins=[];for(let b=lo;b<hi;b+=0.5)bins.push({b,n:0});
+  for(const w of sorted){const i=Math.min(bins.length-1,Math.max(0,Math.floor((w-lo)/0.5)));if(bins[i])bins[i].n++}
+  const mx=Math.max(...bins.map(b=>b.n),1);
+  const opts=list.map(x=>`<option value="${x.c.id}|${x.ln}" ${x===r?'selected':''}>${x.c.name}（${LJ[x.ln]}）</option>`).join('');
+  let h=`<div class="pairhead">先出しするキャラ：<select id="simSel">${opts}</select>　<button class="helpbtn" id="simAgain">もう一回引く</button>　（順位表でキャラ名を押しても選べます）</div>`;
+  h+=`<div class="pairhead">${N.toLocaleString()}回引いた平均：<b>${mean.toFixed(2)}%</b>　／　だいたいの幅（真ん中の80%）：<b>${q(0.1).toFixed(1)}〜${q(0.9).toFixed(1)}%</b>　／　天敵（${$('th').value}%以上不利）が1体でも来る確率：<b style="color:var(--bad)">${(hit*100).toFixed(0)}%</b></div>`;
+  h+='<div style="display:flex;align-items:flex-end;gap:2px;height:90px;margin:6px 0 4px">'+bins.map(b=>`<div title="${b.b.toFixed(1)}〜${(b.b+0.5).toFixed(1)}%：${b.n}回" style="flex:1;height:${(b.n/mx*100).toFixed(0)}%;background:${b.b<r.A-1?'var(--bad)':b.b>r.A+1?'var(--good)':'#7fb6e8'};opacity:.8;border-radius:2px 2px 0 0"></div>`).join('')+'</div>';
+  h+=`<div class="pairhead" style="display:flex;justify-content:space-between"><span>${lo}%</span><span>勝率の出やすさ（赤＝今の勝率より1%以上低い、緑＝1%以上高い）</span><span>${hi}%</span></div>`;
+  if(foes.length)h+='<div class="pairhead">よく来る天敵：'+foes.map(f=>`${face(S,f.name)}<b>${f.name}</b>（敵${LJ[f.v]}・${(f.n/N*100).toFixed(0)}%の確率・来たら ${f.d.toFixed(1)}%）`).join('　')+'</div>';
+  h+='<table><thead><tr><th>#</th><th class="l">引いた結果（敵の中身。赤い字が天敵）</th>'+(o.ally?'<th class="l">味方</th>':'')+'<th class="nw">この試合の期待勝率</th></tr></thead><tbody>';
+  res.slice(0,12).forEach((x,i)=>{
+    const f=p=>`<span style="${p.side==='敵'&&p.d<=-o.thr?'color:var(--bad);font-weight:700':p.d>=o.thr?'color:var(--good)':''}">${LJ[p.v]} ${face(S,p.name)}${p.name}${p.how!=='適当'?'（'+p.how+'）':''} ${p.d>=0?'+':''}${p.d.toFixed(1)}</span>`;
+    h+=`<tr><td class="rank">${i+1}</td><td class="l">${x.parts.filter(p=>p.side==='敵').map(f).join('　')}</td>`+(o.ally?`<td class="l">${x.parts.filter(p=>p.side==='味方').map(f).join('　')||'—'}</td>`:'')+`<td class="nw ms">${x.wr.toFixed(1)}</td></tr>`});
+  h+='</tbody></table>';
+  $('wrap').innerHTML=h;
+  $('simSel').onchange=e=>{st.sim=e.target.value;render()};$('simAgain').onclick=()=>render();
+}
+
+// ---- 答え合わせ：前のデータで、後のデータを当てられたか ----
+function renderBT(S){
+  if(sets.length<2){$('wrap').innerHTML='<div class="empty">答え合わせには、データが2回分必要です（今は1回分）。<br>次の30日がたったら、batの1でもう一度取ってください。そのあと、ここで「前のデータ」と「後のデータ」を選んで採点できます。</div>';return}
+  if(st.btA==null||st.btA>=sets.length)st.btA=Math.min(1,sets.length-1);if(st.btB==null||st.btB>=sets.length)st.btB=0;
+  const A=sets[st.btA],B=sets[st.btB],o=settings();
+  const sel=(id,v)=>`<select id="${id}">`+sets.map((s,i)=>`<option value="${i}" ${i===v?'selected':''}>${s.label}</option>`).join('')+'</select>';
+  let h=`<div class="pairhead">前のデータ：${sel('btA',st.btA)}　→　後のデータ：${sel('btB',st.btB)}</div>`;
+  if(A===B){$('wrap').innerHTML=h+'<div class="empty">違うデータを2つ選んでください。</div>';bindBT();return}
+  if(A.tier!==B.tier)h+='<div class="pairhead" style="color:var(--mid)">ランク帯が違うデータ同士です。採点はできますが、ずれやすくなります。</div>';
+  // 1) 相性の数字が当たるか：前の補正あり／補正なし／ゼロで、後の生の数字を当てる
+  const key=(c,ln,v,y)=>c+'|'+ln+'|'+v+'|'+y;
+  const mapOf=(S,shr)=>{const m={};for(const c of S.champs)for(const ln in c.lanes){const L=c.lanes[ln];const same=L.vs[ln];if(!same||!same.length)continue;
+    const G=same.reduce((s,r)=>s+r[3],0),Aw=same.reduce((s,r)=>s+r[1]*r[3],0)/G;
+    for(const v of LANES){const P=prep(L.vs[v],Aw,100,shr);if(!P)continue;for(const x of P.it)m[key(c.id,ln,v,x.name)]={d:x.d,dr:x.dr,n:x.n,s2:x.s2}}}return m};
+  const pS=mapOf(A,true),pR=mapOf(A,false),lt=mapOf(B,false);
+  let eS=0,eR=0,e0=0,ns=0,W=0,nPairs=0;
+  for(const k in lt){if(!(k in pR))continue;const y=lt[k],w=y.n;W+=w;nPairs++;
+    eS+=w*(pS[k].d-y.dr)**2;eR+=w*(pR[k].dr-y.dr)**2;e0+=w*(y.dr)**2;ns+=w*y.s2}
+  if(!W){$('wrap').innerHTML=h+'<div class="empty">2つのデータで共通する相性がありません。</div>';bindBT();return}
+  const rm=x=>Math.sqrt(x/W);
+  const imp=(1-eS/eR)*100;
+  h+=`<table><thead><tr><th class="l">相性の数字の当たり具合（${nPairs.toLocaleString()}組）</th><th>ずれ（小さいほど良い）</th><th class="l">意味</th></tr></thead><tbody>
+  <tr><td class="l">何も知らない（全部0と予想）</td><td>${rm(e0).toFixed(2)}%</td><td class="l ctr">基準。これより小さければ、前の数字に意味がある</td></tr>
+  <tr><td class="l">前の数字をそのまま使う（補正なし）</td><td>${rm(eR).toFixed(2)}%</td><td class="l ctr"></td></tr>
+  <tr class="top3"><td class="l">前の数字を少試合補正して使う（今の計算）</td><td class="ms">${rm(eS).toFixed(2)}%</td><td class="l ctr">補正なしより <b style="color:${imp>=0?'var(--good)':'var(--bad)'}">${imp>=0?imp.toFixed(0)+'%よく当たる':(-imp).toFixed(0)+'%外れる'}</b></td></tr>
+  <tr><td class="l">試合数のブレだけで出てしまうずれ</td><td>${rm(ns).toFixed(2)}%</td><td class="l ctr">どんな計算でもこれより小さくはできない下限</td></tr></tbody></table>`;
+  // 2) 返され率・後出し寄り・順位が続くか
+  const cur=st.set;const ev=S2=>{const pop=popIndex(S2),out={};for(const c of S2.champs)for(const ln in c.lanes){const r=evalLane(c,ln,S2,o,pop);if(r&&!r.few)out[c.id+'|'+ln]=r}return out};
+  const rA=ev(A),rB=ev(B);const both=Object.keys(rA).filter(k=>k in rB);
+  const rank=(arr)=>{const s=[...arr].map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]);const r=new Array(arr.length);s.forEach(([v,i],k)=>r[i]=k);return r};
+  const spear=(xa,xb)=>{if(xa.length<3)return null;const a=rank(xa),b=rank(xb),n=a.length;let d=0;for(let i=0;i<n;i++)d+=(a[i]-b[i])**2;return 1-6*d/(n*(n*n-1))};
+  const rets=both.filter(k=>rA[k].ret!=null&&rB[k].ret!=null);
+  const sRet=spear(rets.map(k=>rA[k].ret),rets.map(k=>rB[k].ret));
+  const sMs=spear(both.map(k=>rA[k].msa),both.map(k=>rB[k].msa));
+  const sOld=spear(both.map(k=>rA[k].score),both.map(k=>rB[k].score));
+  const lateA=both.filter(k=>rA[k].late),lateKeep=lateA.filter(k=>rB[k].late).length;
+  const fmt=v=>v==null?'—':v.toFixed(2);
+  h+=`<table style="margin-top:14px"><thead><tr><th class="l">続くかどうか（${both.length}キャラ・レーン）</th><th>一致度（1に近いほど続く）</th><th class="l">意味</th></tr></thead><tbody>
+  <tr><td class="l">ブラインド強さの順位（元の計算）</td><td>${fmt(sOld)}</td><td class="l ctr">前と後で順位がどれだけ同じか</td></tr>
+  <tr class="top3"><td class="l">味方込み強さの順位（新しい計算）</td><td class="ms">${fmt(sMs)}</td><td class="l ctr">元の計算より1に近ければ、新しい計算のほうがブレにくい</td></tr>
+  <tr><td class="l">実測の返され率</td><td>${fmt(sRet)}</td><td class="l ctr">高ければ「返されやすさ」はたまたまではなく、そのキャラの性質</td></tr>
+  <tr><td class="l">後出し寄りの印</td><td>${lateA.length?lateKeep+' / '+lateA.length:'—'}</td><td class="l ctr">前に印が付いたキャラのうち、後でも付いたキャラの数</td></tr></tbody></table>
+  <div class="pairhead" style="margin-top:10px">注意：Lolalyticsにはどの試合が先出しだったかのデータがないので、ブラインド強さそのものは直接は採点できません。ここでは、その材料（相性の数字・返され率）が次の期間も当たるかを採点しています。</div>`;
+  $('wrap').innerHTML=h;bindBT();
+}
+function bindBT(){const a=$('btA'),b=$('btB');if(a)a.onchange=e=>{st.btA=+e.target.value;render()};if(b)b.onchange=e=>{st.btB=+e.target.value;render()}}
+
+
+// ---- 縦画面（帯）表示 ----
+const SQC=x=>{const t=Math.max(0,Math.min(1,x/2.5));return `rgba(229,84,75,${(0.12+t*0.85).toFixed(2)})`};
+function renderBand(rows,S,key){
+  const vals=[];for(const r of rows){vals.push(r.worst,r.A,r.fair,r.ms,r.msa)}
+  let lo=Math.floor(Math.min(...vals)),hi=Math.ceil(Math.max(...vals));if(hi-lo<4){lo-=1;hi+=1}
+  const X=v=>((v-lo)/(hi-lo)*100).toFixed(1)+'%';
+  const sorts=[['msa','味方込み強さ'],['ms','相手モデル強さ'],['score','ブラインド強さ（元）'],['fair','人気どおり勝率'],['worst','最悪の返し'],['A','勝率']];
+  let h=`<div class="bandhead"><span>並び：<select id="bsort">${sorts.map(([k,t])=>`<option value="${k}" ${key===k?'selected':''}>${t}</option>`).join('')}</select></span>
+    <span class="lg"><span style="color:var(--bad)">┃</span>最悪の返し</span><span class="lg">▲人気どおり</span><span class="lg"><span style="color:#7fb6e8">●</span>相手モデル</span><span class="lg"><span style="color:var(--gold)">◆</span>味方込み</span><span class="lg"><span style="color:var(--sub)">│</span>勝率</span>
+    <span class="lg">帯が長い＝返されると大きく落ちる</span><span class="lg">四角＝敵 TOP/JG/MID/BOT/SUP の削られ量</span></div>`;
+  h+=`<div class="axisnote">横軸＝先出ししたときの期待勝率（%）。赤い線（左）＝相手が一番痛い返しをしてきたとき、◆（右）＝ふだんの強さ。<b>帯の長さ＝振れ幅</b>で、短いほど返されても崩れない。点線＝このランク帯の平均（${S.avg}%）。</div>`;
+  h+=`<div class="bandhead" style="justify-content:space-between;margin:0 54px 2px 156px"><span>${lo}%</span><span>${((lo+hi)/2).toFixed(0)}%</span><span>${hi}%</span></div>`;
+  let rk=0;
+  rows.forEach(r=>{
+    if(!r.few)rk++;
+    const top=Math.max(r.A,r.fair,r.ms,r.msa);
+    const sq=LANES.map(v=>{const p=r.per[v];const on=r.cnt.includes(v);return `<span class="sq" title="vs ${LJ[v]} −${p?p.loss.toFixed(2):'—'}" style="background:${p?SQC(p.loss):'transparent'};${on?'':'opacity:.25'}"></span>`}).join('');
+    const sub=[r.late?'<span style="color:#e0a23b">後出し寄り</span>':'',r.ctr?`痛${face(S,r.ctr.name)}`:'',r.ban?`BAN${face(S,r.ban.name)}`:'',`<span title="返されたときに落ちる幅（味方込み強さ − 最悪の返し）">幅${(r.msa-r.worst).toFixed(1)}</span>`].filter(Boolean).join(' ');
+    const id=r.c.id+'|'+r.ln,open=st.bopen===id;
+    h+=`<div class="brow ${r.few?'few':''} ${!r.few&&rk<=3?'top3':''}" data-id="${id}">
+      <div class="rk">${r.few?'':rk}</div>
+      <div class="bname"><div class="ch">${img(S,r.c.id)}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.c.name}</span><span class="lane">${LJ[r.ln]}</span></div><div class="bsub">${sq}<span>${sub}</span></div></div>
+      <div class="band" title="最悪 ${r.worst.toFixed(1)} / 人気どおり ${r.fair.toFixed(1)} / 相手モデル ${r.ms.toFixed(1)} / 味方込み ${r.msa.toFixed(1)} / 勝率 ${r.A.toFixed(1)}">
+        <div class="ax"></div><div class="mid" style="left:${X(S.avg)}"></div>
+        <div class="rg" style="left:${X(r.worst)};width:calc(${X(top)} - ${X(r.worst)})"></div>
+        <div class="mk" style="left:${X(r.worst)};color:var(--bad)">┃</div>
+        <div class="mk" style="left:${X(r.A)};color:var(--sub)">│</div>
+        <div class="mk" style="left:${X(r.fair)}">▲</div>
+        <div class="mk" style="left:${X(r.ms)};color:#7fb6e8">●</div>
+        <div class="mk" style="left:${X(r.msa)};color:var(--gold)">◆</div>
+      </div>
+      <div class="bval">${(r[key]!=null&&typeof r[key]==='number'?r[key]:r.msa).toFixed(1)}</div>
+      ${open?`<div class="bdet">
+        <span>勝率 <b>${r.A.toFixed(2)}</b></span><span>ブラインド強さ <b>${r.score.toFixed(2)}</b></span>
+        <span>人気どおり勝率 <b>${r.fair.toFixed(2)}</b></span><span>相手モデル強さ <b>${r.ms.toFixed(2)}</b></span>
+        <span>味方込み強さ <b>${r.msa.toFixed(2)}</b></span><span>最悪の返し <b>${r.worst.toFixed(2)}</b></span>
+        <span>削られる合計 <b>−${r.loss.toFixed(2)}</b></span><span>刺される確率 <b>${(r.P*100).toFixed(0)}%</b></span>
+        <span>強さ（正規版） <b>${r.scoreN.toFixed(2)}</b></span><span>刺される（正規版） <b>${(r.PN*100).toFixed(0)}%</b></span>
+        <span>一番痛い対面 <b>${r.ctr?r.ctr.name+' '+r.ctr.d.toFixed(1):'—'}</b></span><span>実測の返され率 <b>${r.ret==null?'—':'×'+r.ret.toFixed(2)}</b></span>
+        <span>味方の助け <b>${(r.help>=0?'+':'')+r.help.toFixed(2)}</b></span><span>BANするなら <b>${r.ban?r.ban.name+' +'+r.ban.gain.toFixed(2):'—'}</b></span>
+        <span>試合数 <b>${r.G.toLocaleString()}</b></span><span>レーン割合 <b>${r.share||'—'}%</b></span>
+        ${LANES.map(v=>{const p=r.per[v];return `<span>vs ${LJ[v]} <b>${p?'−'+p.loss.toFixed(2):'—'}</b>${r.cnt.includes(v)?'':'（数えない）'}</span>`}).join('')}
+        <span><a href="#" class="simlink" data-sim="${id}" style="color:var(--gold)">▶ 試しに引く</a></span>
+      </div>`:''}
+    </div>`;
+  });
+  $('wrap').innerHTML=h;
+  $('bsort').onchange=e=>{st.sort=e.target.value;st.asc=false;render()};
+  document.querySelectorAll('.brow').forEach(el=>el.onclick=e=>{if(e.target.classList.contains('simlink')){e.preventDefault();st.sim=e.target.dataset.sim;setView('sim');return}st.bopen=st.bopen===el.dataset.id?null:el.dataset.id;render()});
+}
+
+// ---- 使い込む：レーンごとのティア表 ＋ 好み ----
+let LIKE={};try{LIKE=JSON.parse(localStorage.getItem('blindLike')||'{}')||{}}catch(e){LIKE={}}
+LIKE.like=LIKE.like||[];LIKE.dis=LIKE.dis||[];LIKE.fb=LIKE.fb||{};
+function saveLike(){try{localStorage.setItem('blindLike',JSON.stringify(LIKE))}catch(e){}}
+const vecCache=new Map();
+function profVec(S,c,ln,o){
+  const k=[S.label,c.id,ln,o.minG].join('|');if(vecCache.has(k))return vecCache.get(k);
+  const L=c.lanes[ln];const v={};
+  const same=L.vs[ln];if(!same||!same.length){vecCache.set(k,v);return v}
+  const G=same.reduce((s,r)=>s+r[3],0),A=same.reduce((s,r)=>s+r[1]*r[3],0)/G;
+  for(const role of LANES){const P=prep(L.vs[role],A,o.minG,true);if(!P)continue;for(const x of P.it)v[role+'|'+x.name]=x.d}
+  vecCache.set(k,v);return v;
+}
+function mainLane(c){let b=null,bs=-1;for(const ln in c.lanes){const s=c.lanes[ln].share||0;const same=c.lanes[ln].vs&&c.lanes[ln].vs[ln];if(same&&same.length&&s>bs){bs=s;b=ln}}return b}
+function cosSim(a,b){let ab=0,aa=0,bb=0,n=0;for(const k in a){if(!(k in b))continue;ab+=a[k]*b[k];aa+=a[k]*a[k];bb+=b[k]*b[k];n++}return n>=8&&aa>0&&bb>0?ab/Math.sqrt(aa*bb):0}
+function prefOf(S,c,ln,o,byId){
+  const v=profVec(S,c,ln,o);let best=null,ls=0,ln_=0,ds=0,dn=0;
+  for(const id of LIKE.like){if(id===c.id)return {p:1,best:{name:c.name,s:1},self:'like'};const cc=byId[id];if(!cc)continue;const m=mainLane(cc);if(!m)continue;const s=cosSim(v,profVec(S,cc,m,o));ls+=s;ln_++;if(!best||s>best.s)best={name:cc.name,s}}
+  let worst=null;
+  for(const id of LIKE.dis){if(id===c.id)return {p:-1,self:'dis'};const cc=byId[id];if(!cc)continue;const m=mainLane(cc);if(!m)continue;const s=cosSim(v,profVec(S,cc,m,o));ds+=s;dn++;if(!worst||s>worst.s)worst={name:cc.name,s}}
+  const p=(ln_?ls/ln_:0)-(dn?ds/dn:0);
+  return {p,best,worst};
+}
+function renderMain(S){
+  const o=settings(),pop=popIndex(S);
+  const byId={};for(const c of S.champs)byId[c.id]=c;
+  const w=st.prefW==null?2:st.prefW;
+  const usePref=LIKE.like.length+LIKE.dis.length>0;
+  // 安定（データが2回分以上あれば、前のデータとの差）
+  let prev=null;if(sets.length>=2){const P=sets[st.set+1]||sets[1];if(P&&P!==S){prev={};const pp=popIndex(P);for(const c of P.champs)for(const ln in c.lanes){const r=evalLane(c,ln,P,o,pp);if(r)prev[c.id+'|'+ln]=r.msa}}}
+  const lanesShown=st.lane==='all'?LANES:[st.lane];
+  // 好きなキャラ・苦手なキャラの選択
+  const q=(st.likeQ||'').toLowerCase();
+  const allC=[...S.champs].sort((a,b)=>a.name.localeCompare(b.name)).filter(c=>!q||c.name.toLowerCase().includes(q));
+  let h=`<div class="pairhead"><b>好きなキャラ・苦手なキャラ</b>　1回押すと<span style="color:var(--good)">好き</span>、もう1回で<span style="color:var(--bad)">苦手</span>、もう1回で解除。5体ずつくらいでOK。
+    <input class="srch" id="likeQ" placeholder="名前で探す" value="${st.likeQ||''}">　好みの重さ<input type="range" id="prefW" min="0" max="5" step="0.5" value="${w}" style="width:90px;accent-color:var(--gold)"><b>${w}</b></div>
+    <div class="likebox" id="likebox">${allC.map(c=>{const cl=LIKE.like.includes(c.id)?'lk':LIKE.dis.includes(c.id)?'dl':'';return `<button data-id="${c.id}" class="${cl}">${img(S,c.id)}${c.name}</button>`}).join('')}</div>
+    <div class="pairhead">選び方のコツ：上の3体（金の枠）から<b>自分で1体選ぶ</b>のがおすすめです。最初の数試合は、どのキャラでも慣れるまで負けやすいのが普通なので、<b>ノーマルなどで10試合くらいは様子見</b>してから決めてください（10試合は目安）。試したら「よかった／微妙」を押すと、好みに反映されます。</div>`;
+  for(const L of lanesShown){
+    const list=[];
+    for(const c of S.champs){if(!c.lanes[L])continue;const r=evalLane(c,L,S,o,pop);if(!r||r.few)continue;
+      const pf=usePref?prefOf(S,c,L,o,byId):{p:0};
+      const stab=prev&&prev[c.id+'|'+L]!=null?Math.abs(r.msa-prev[c.id+'|'+L]):null;
+      list.push({r,pf,stab,total:r.msa+w*pf.p})}
+    list.sort((a,b)=>b.total-a.total);
+    const top=list.slice(0,12);if(!top.length)continue;
+    h+=`<div class="mlane"><h3>${LJ[L]}　使い込むならこれ</h3>`;
+    top.forEach((x,i)=>{
+      const t=i<2?'S':i<5?'A':i<9?'B':'C';const r=x.r;
+      const why=[];
+      why.push(`先出しの強さ <b>${r.msa.toFixed(1)}%</b>`);
+      if(r.worst<r.A-3)why.push(`最悪の返しで <b style="color:var(--bad)">${r.worst.toFixed(1)}%</b> まで落ちる`);else why.push('返されても崩れにくい');
+      if(x.pf.self==='like')why.push('<b style="color:var(--good)">好きなキャラ</b>');
+      else if(x.pf.best&&x.pf.best.s>0.15)why.push(`好きな${face(S,x.pf.best.name)}<b>${x.pf.best.name}</b>と同じ相手に強くて弱い（似方 ${(x.pf.best.s*100).toFixed(0)}%）`);
+      if(x.pf.worst&&x.pf.worst.s>0.25)why.push(`苦手な${x.pf.worst.name}に少し似ている`);
+      if(x.stab!=null)why.push(x.stab<1?'<b>前の期間とほぼ同じ強さ（安定）</b>':`前の期間から ${x.stab.toFixed(1)}% 動いた`);
+      if(r.late)why.push('<span style="color:#e0a23b">後出し寄り</span>');
+      const fb=LIKE.fb[r.c.id];
+      h+=`<div class="mrow ${i<3?'pick3':''}"><div class="tier t${t}">${t}</div>
+        <div class="ch">${img(S,r.c.id)}${r.c.name}</div>
+        <div class="why">${why.join('　／　')}</div>
+        <div class="fb"><button data-fb="1" data-id="${r.c.id}" class="${fb===1?'on1':''}">よかった</button><button data-fb="2" data-id="${r.c.id}" class="${fb===2?'on2':''}">微妙</button></div></div>`;
+    });
+    h+=`<div class="pairhead"><a href="#" class="topair" data-l="${L}" style="color:var(--gold)">▶ 上の3体で2体セットを組む</a></div></div>`;
+  }
+  $('wrap').innerHTML=h;
+  $('likebox').onclick=e=>{const b=e.target.closest('button');if(!b)return;const id=b.dataset.id;
+    if(LIKE.like.includes(id)){LIKE.like=LIKE.like.filter(x=>x!==id);LIKE.dis.push(id)}
+    else if(LIKE.dis.includes(id)){LIKE.dis=LIKE.dis.filter(x=>x!==id)}
+    else LIKE.like.push(id);
+    saveLike();render()};
+  $('likeQ').oninput=e=>{st.likeQ=e.target.value;const pos=e.target.selectionStart;render();const i=$('likeQ');i.focus();i.setSelectionRange(pos,pos)};
+  $('prefW').oninput=e=>{st.prefW=+e.target.value;render()};
+  document.querySelectorAll('.fb button').forEach(b=>b.onclick=()=>{const id=b.dataset.id,v=+b.dataset.fb;
+    LIKE.fb[id]=LIKE.fb[id]===v?0:v;
+    LIKE.like=LIKE.like.filter(x=>x!==id);LIKE.dis=LIKE.dis.filter(x=>x!==id);
+    if(LIKE.fb[id]===1)LIKE.like.push(id);if(LIKE.fb[id]===2)LIKE.dis.push(id);
+    saveLike();render()});
+  document.querySelectorAll('.topair').forEach(a=>a.onclick=e=>{e.preventDefault();const L=a.dataset.l;
+    const ids=[...a.closest('.mlane').querySelectorAll('.mrow.pick3 .fb button[data-fb="1"]')].map(b=>b.dataset.id);
+    POOL[L]=ids;savePool();st.lane=L;st.pairMode='same';$('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.l===L));setView('pair')});
+}
+// ---- Tier：おすすめ設定で固定した、先出しのTier表 ----
+const TIER_O={minG:100,thr:2,n:7,cg:5000,shr:true,meas:true,al:0.4,rd:true,pf:0.5,pre:true,ally:true,be:0.3};
+const TIERS=[['S',1.5],['A',0.75],['B',0],['C',-Infinity]];
+function renderTier(S){
+  const o=TIER_O,pop=popIndex(S);
+  const lanes=st.lane==='all'?LANES:[st.lane];
+  let h=`<div class="pairhead"><b>先出しTier</b>（おすすめ設定で固定）　点数＝味方込み強さ×0.75＋最悪の返し×0.25。レーンの平均より <b>+1.5%以上＝S</b>／<b>+0.75%以上＝A</b>／<b>0%以上＝B</b>／<b>平均未満＝C</b>。顔を押すと理由が出ます。<br><span class="ctr">設定：相性の最低試合数100・キャラの最低試合数5,000・カウンター基準−2%・相手のプール7体・少試合補正／実測の返され率／レーンの読めなさ／味方の助け すべてオン（上のスライダーはこの画面には効きません）</span></div>`;
+  for(const L of lanes){
+    const rows=[],ref=[];
+    for(const c of S.champs){if(!c.lanes[L])continue;const r=evalLane(c,L,S,o,pop);if(!r)continue;r.bp=0.75*r.msa+0.25*r.worst;(r.G>=o.cg?rows:ref).push(r)}
+    if(!rows.length)continue;
+    const avg=rows.reduce((s,r)=>s+r.bp,0)/rows.length;
+    rows.sort((a,b)=>b.bp-a.bp);
+    h+=`<div class="mlane"><h3>${LJ[L]}　<span class="ctr">レーン平均 ${avg.toFixed(2)}点・${rows.length}体</span></h3>`;
+    for(const [t,th] of TIERS){
+      const lo=th,hi=TIERS[TIERS.findIndex(x=>x[0]===t)-1];
+      const g=rows.filter(r=>r.bp-avg>=th&&(!hi||r.bp-avg<hi[1]));
+      if(!g.length)continue;
+      h+=`<div class="trow"><div class="tier t${t}" style="width:34px;flex:none">${t}</div><div class="tfaces">`+g.map(r=>{
+        const id=r.c.id+'|'+L,on=st.topen===id;
+        return `<button class="tface ${on?'on':''}" data-id="${id}" title="${r.c.name}">${img(S,r.c.id)}<span>${r.c.name}</span>${r.late?'<i class="tlate">後</i>':''}</button>`}).join('')+'</div></div>';
+      const op=g.find(r=>st.topen===r.c.id+'|'+L);
+      if(op){const d=op.bp-avg;
+        h+=`<div class="tdet">${img(S,op.c.id)}<div><b>${op.c.name}</b>（${LJ[L]}・${t}）　平均より <b style="color:${d>=0?'var(--good)':'var(--bad)'}">${d>=0?'+':''}${d.toFixed(2)}</b><br>
+          ふだん <b>${op.msa.toFixed(1)}%</b> ／ 一番痛い返しをされても <b>${op.worst.toFixed(1)}%</b>（振れ幅 ${(op.msa-op.worst).toFixed(1)}）`+
+          (op.ctr?`／ 天敵：${face(S,op.ctr.name)}${op.ctr.name}（${op.ctr.d.toFixed(1)}%）`:'')+(op.ban?`／ BANするなら ${face(S,op.ban.name)}${op.ban.name}`:'')+
+          (op.late?`<br><span style="color:#e0a23b">後出し寄り：後から選ばれることが多く、勝率が盛られている可能性があります</span>`:'')+
+          `<br><a href="#" class="tsim" data-sim="${op.c.id}|${L}" style="color:var(--gold)">▶ 試しに引く</a>　<span class="ctr">試合数 ${op.G.toLocaleString()}</span></div></div>`}
+    }
+    if(ref.length){ref.sort((a,b)=>b.bp-a.bp);h+=`<div class="pairhead ctr">参考（試合数5,000未満）：${ref.slice(0,12).map(r=>`${face(S,r.c.name)}${r.c.name} ${(r.bp-avg>=0?'+':'')+(r.bp-avg).toFixed(1)}`).join('　')}</div>`}
+    h+='</div>';
+  }
+  $('wrap').innerHTML=h;
+  document.querySelectorAll('.tface').forEach(b=>b.onclick=()=>{st.topen=st.topen===b.dataset.id?null:b.dataset.id;render()});
+  document.querySelectorAll('.tsim').forEach(a=>a.onclick=e=>{e.preventDefault();st.sim=a.dataset.sim;setView('sim')});
+}
+
+function helpTip(r){
+  if(!$('ally').checked)return '「味方の助けを入れる」がオフです';
+  const L=[];
+  L.push(`① 相性のいい味方を出してもらえる伸びしろ：${r.up>=0?'+':''}${r.up.toFixed(2)}%`);
+  if(!r.hasTeam)L.push('　（このデータには味方の相性が入っていません。batの3で補強すると入ります）');
+  else if(!r.upd.length)L.push('　（このレーンは味方の相性をあまり受けないので数えていません）');
+  for(const u of r.upd)L.push(`　味方${LJ[u.v]}：${u.val>=0?'+':''}${u.val.toFixed(2)}　相性がいい：${u.b.best.map(x=>x.name+' +'+x.d.toFixed(1)).join('、')||'—'}　噛み合わない：${u.b.bad.map(x=>x.name+' '+x.d.toFixed(1)).join('、')||'—'}`);
+  L.push(`② カウンターされたとき後ろの味方が取り返す量：+${r.rec.toFixed(2)}%`);
+  if(r.recd&&r.recd.tops.length)for(const t of r.recd.tops)L.push(`　${t.y}に返されたら → 味方${LJ[r.recd.R]}の${t.by}で +${t.d.toFixed(1)}`);
+  else if(!HELPER[r.ln])L.push('　（このレーンの後ろに取り返す味方はいない前提）');
+  return L.join('\n');
+}
+
+function render(){
+  renderControls();
+  const S=sets[st.set];
+  if(!S){$('wrap').innerHTML='<div class="empty">まだデータがありません。<br>同じフォルダの「blind.bat」をダブルクリックして、1 か 2 を選んでください。</div>';return}
+  let miss=0;for(const c of S.champs)for(const ln in c.lanes)for(const v in c.lanes[ln].vs)if(c.lanes[ln].vs[v]===null)miss++;
+  $('meta').textContent=`データ${sets.length}件（いちばん新しい：${sets[0].label}）・${S.champs.length}キャラ・平均勝率 ${S.avg}%`+(miss?`・取得漏れ ${miss}ページ（batの3で補強）`:'');
+  if(st.view==='pair')return renderPairs(S);
+  if(st.view==='sim')return renderSim(S);
+  if(st.view==='main')return renderMain(S);
+  if(st.view==='tier')return renderTier(S);
+  if(st.view==='bt')return renderBT(S);
+  let rows=compute();
+  if($('hide').checked)rows=rows.filter(r=>!r.few);
+  const key=st.sort,dir=st.asc?1:-1;
+  const val=r=>key==='name'?r.c.name:key==='ctr'?(r.ctr?r.ctr.d:0):key==='ban'?(r.ban?r.ban.gain:0):key==='ret'?(r.ret==null?0:r.ret):key.startsWith('vs_')?(r.per[key.slice(3)]?r.per[key.slice(3)].loss:-1):r[key];
+  rows.sort((a,b)=>{
+    if(key==='rank'){if(a.few!==b.few)return a.few?1:-1;return (b.score-a.score)*(st.asc?-1:1)}
+    if(a.few!==b.few&&(key==='score'||key==='scoreN'||key==='fair'||key==='ms'||key==='msa'||key==='worst'))return a.few?1:-1;
+    const x=val(a),y=val(b);return (typeof x==='string'?x.localeCompare(y):x-y)*dir;
+  });
+  if(st.compact)return renderBand(rows,S,key==='rank'||key==='name'||key==='ctr'||key==='ban'||key==='ret'||key==='help'||key==='G'||key==='loss'||key==='P'||key==='PN'||key.startsWith('vs_')?'msa':key);
+  const n2i=nameToId(S);
+  let h='<table><thead><tr>'+COLS.map(c=>`<th class="${c.l?'l ':''}${c.nw?'nw ':''}${st.sort===c.k?'on':''}" data-k="${c.k}">${c.t}${st.sort===c.k?(st.asc?' ▲':' ▼'):''}</th>`).join('')+'</tr></thead><tbody>';
+  let rk=0;
+  rows.forEach(r=>{
+    if(!r.few)rk++;
+    const lm=r.mod[r.ln];
+    const msTip=`相手モデル強さ ${r.ms.toFixed(2)}%\n`+r.cnt.filter(v=>r.mod[v]&&r.mod[v].dv!=null).map(v=>{const m=r.mod[v];return `vs ${LJ[v]}: 返してくる確率 ${(m.a*100).toFixed(0)}% → ${m.dv>=0?'+':''}${m.dv.toFixed(2)}%（最悪 ${m.Em.toFixed(2)} / 適当 ${m.Er.toFixed(2)}）`}).join('\n')+(r.readS<1?`\nレーンの読めなさ：相手がこのレーンだと読める確率 ${(r.readS*100).toFixed(0)}%`:'');
+    const retTip=lm&&lm.ratio!=null?`カウンター役との対戦：実際 ${(lm.csO*100).toFixed(1)}% ／ 人気だけなら ${(lm.csP*100).toFixed(1)}%\n→ 推定「相手が返してくる確率」 ${(lm.aMeas*100).toFixed(0)}%`:'データ不足';
+    const ret=r.ret==null?'—':'×'+r.ret.toFixed(2);
+    const retC=r.ret==null?'':r.ret>=1.2?'hi':r.ret<=0.9?'lo':'';
+    h+=`<tr class="${r.few?'few':''} ${!r.few&&rk<=3&&key==='score'&&!st.asc?'top3':''}"><td class="rank">${r.few?'':rk}</td>`+
+      `<td class="l"><div class="ch sim" data-sim="${r.c.id}|${r.ln}" title="クリックで「試しに引く」">${img(S,r.c.id)}${r.c.name}<span class="lane">${LJ[r.ln]}${r.share?' '+r.share+'%':''}</span>${r.few?'<span class="tag">少試合</span>':''}${r.late?`<span class="tag late" title="天敵との対戦が、人気から予想される分の×${r.ret.toFixed(2)}しかありません。後から選ばれることが多く、勝率が盛られている可能性があります（数字は自動では下げていません）。「最悪の返し」も見てください。">後出し寄り</span>`:''}</div></td>`+
+      `<td class="score">${r.score.toFixed(2)}</td><td class="score" title="数える代わりに、本当のばらつきの正規分布の端の面積でカウンター確率を出した版（Machine Lolling続編の方法）。今の強さとの差 ${(r.scoreN-r.score>=0?'+':'')+(r.scoreN-r.score).toFixed(2)}" style="color:var(--gold)">${r.scoreN.toFixed(2)}</td><td>${r.A.toFixed(2)}</td><td style="color:var(--bad)">−${r.loss.toFixed(2)}</td>`+
+      `<td>${(r.P*100).toFixed(0)}%</td><td title="敵5ロールそれぞれの正規版の確率を、1−(刺されない確率の掛け算)でまとめたもの" style="color:var(--gold)">${(r.PN*100).toFixed(0)}%</td><td>${r.G.toLocaleString()}</td>`+
+      `<td class="nw" title="天敵とも人気どおりに当たっていたらの勝率。今の勝率 ${r.A.toFixed(2)} から ${(r.fair-r.A>=0?'+':'')+(r.fair-r.A).toFixed(2)}">${r.fair.toFixed(2)}<span class="ctr"> ${(r.fair-r.A>=0?'+':'')+(r.fair-r.A).toFixed(2)}</span></td>`+
+      `<td class="nw ms" title="${msTip}">${r.ms.toFixed(2)}</td>`+
+      `<td class="nw ms" title="相手モデル強さ ${r.ms.toFixed(2)} ＋ 味方の助け ${r.help>=0?'+':''}${r.help.toFixed(2)}">${r.msa.toFixed(2)}</td>`+
+      `<td class="nw" title="相手が毎回、手持ち${$('np').value}体の中で一番痛いキャラを出してきたときの期待勝率">${r.worst.toFixed(2)}</td>`+
+      `<td class="nw l ctr">${r.ctr?`${face(S,r.ctr.name)}${r.ctr.name} ${r.ctr.d.toFixed(1)}`:'—'}</td>`+
+      `<td class="nw ret ${retC}" title="${retTip}">${ret}</td>`+
+      `<td class="nw help2" title="${helpTip(r)}">${$('ally').checked?((r.help>=0?'+':'')+r.help.toFixed(2)):'—'}</td>`+
+      `<td class="nw l ban">${r.ban?`${face(S,r.ban.name)}${r.ban.name} +${r.ban.gain.toFixed(2)}`:'—'}</td>`+
+      LANES.map(v=>{const p=r.per[v];if(!p)return '<td style="color:#3a4756">—</td>';
+        const off=!r.cnt.includes(v);
+        const q=r.perN[v];const tip=`刺される確率 ${(p.P*100).toFixed(1)}% × 下がり幅 ${p.drop.toFixed(2)}%\nカウンター割合 ${(p.share*100).toFixed(1)}% / 本当のばらつき ${p.sd.toFixed(2)}% / ${p.games.toLocaleString()}試合\n正規版：カウンター割合 ${(q.share*100).toFixed(1)}% → 刺される ${(q.P*100).toFixed(1)}% × ${q.drop.toFixed(2)}% = −${q.loss.toFixed(2)}`;
+        return `<td title="${tip}" style="${off?'opacity:.3':''}"><span class="cell" style="background:${color(p.loss,0,2.5)}">−${p.loss.toFixed(2)}</span></td>`}).join('')+'</tr>';
+  });
+  h+='</tbody></table>';
+  $('wrap').innerHTML=h;
+  document.querySelectorAll('.ch.sim').forEach(el=>el.onclick=()=>{st.sim=el.dataset.sim;setView('sim')});
+  document.querySelectorAll('th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(st.sort===k)st.asc=!st.asc;else{st.sort=k;st.asc=(k==='name'||k==='ctr'||k==='loss'||k==='P'||k==='PN'||k.startsWith('vs_'))}render()});
+}
+
+// ---- 2体セット ----
+// ---- 2体セット：切り替え（同じレーンで2体／デュオ） ----
+const PARTNER={bottom:'support',support:'bottom',middle:'jungle',top:'jungle',jungle:'middle'};
+function pairModeBar(){
+  const m=st.pairMode||'same';
+  return `<div class="pairhead"><span class="views" id="pmode">${[['same','同じレーンで2体（先出し用＋返し用）'],['duo','デュオ（2レーンの組み合わせ）']].map(([k,t])=>`<button data-m="${k}" class="${m===k?'on':''}">${t}</button>`).join(' ')}</span></div>`;
+}
+function bindPairMode(){const b=$('pmode');if(b)b.onclick=e=>{const m=e.target.dataset.m;if(!m)return;st.pairMode=m;render()}}
+const lg=p=>Math.log(p/(1-p));
+function renderDuo(S){
+  const A=st.lane;
+  if(A==='all'){$('wrap').innerHTML=pairModeBar()+'<div class="empty">デュオは、まず上のレーンタブ（BOTなど）を押してください。<br>相方のレーンは自動で選ばれます（BOT→SUP、MID→JG など）。</div>';bindPairMode();return}
+  if(!st.duoB||st.duoB===A||st.duoA!==A){st.duoB=PARTNER[A];st.duoA=A;st.duoX=null;st.duoY=null;st.duoFocus='X'}
+  const B=st.duoB,o=settings(),pop=popIndex(S);
+  const ev=ln=>{const out=[];for(const c of S.champs){if(!c.lanes[ln])continue;const r=evalLane(c,ln,S,o,pop);if(r&&!r.few)out.push(r)}return out.sort((a,b)=>b.G-a.G)};
+  const LA=ev(A),LB=ev(B);
+  const byId=(L,id)=>L.find(r=>r.c.id===id);
+  // 相性：Xの味方Bロールの表 → なければYの味方Aロールの表
+  const synCache={};
+  const synMap=r=>{const k=r.c.id;if(synCache[k])return synCache[k];const m={};const t=r.c.lanes[A].team;
+    if(t&&t[B]){const P=prep(t[B],r.A,o.minG,o.shr);if(P)for(const x of P.it)m[x.name]=x.d}return synCache[k]=m};
+  const synRev={};
+  const synOf=(x,y)=>{const m=synMap(x);if(y.c.name in m)return {d:m[y.c.name],src:'有'};
+    const k=y.c.id;if(!synRev[k]){synRev[k]={};const t=y.c.lanes[B].team;if(t&&t[A]){const P=prep(t[A],y.A,o.minG,o.shr);if(P)for(const z of P.it)synRev[k][z.name]=z.d}}
+    if(x.c.name in synRev[k])return {d:synRev[k][x.c.name],src:'有'};return {d:0,src:'無'}};
+  const base=lg(S.avg/100);
+  const duo=(x,y)=>{const s=synOf(x,y);const p=1/(1+Math.exp(-(lg(x.ms/100)+lg(y.ms/100)-base)));return {v:p*100+s.d,s}};
+  const X=st.duoX?byId(LA,st.duoX):null,Y=st.duoY?byId(LB,st.duoY):null;
+  const chips=(L,slot,sel)=>L.slice(0,70).map(r=>`<button data-slot="${slot}" data-id="${r.c.id}" class="${sel===r.c.id?'on':''}">${img(S,r.c.id)}${r.c.name}</button>`).join('');
+  const laneSel=`<select id="duoB">${LANES.filter(l=>l!==A).map(l=>`<option value="${l}" ${l===B?'selected':''}>${LJ[l]}</option>`).join('')}</select>`;
+  const focus=st.duoFocus||'X';
+  let h=pairModeBar();
+  h+=`<div class="pairhead">デュオ：2人とも先出しする前提で、相手の返しと2人の相性を込みにした期待勝率です。<b>1体目を押すと、自動で2体目（${LJ[B]}）の選択に進みます。</b>　相方のレーン：${laneSel}</div>`;
+  h+=`<div class="pairhead"><b style="color:${focus==='X'?'var(--gold)':'var(--sub)'}">▶ 1体目（${LJ[A]}）</b>${X?'：'+X.c.name:''}</div><div class="pool" id="duoPoolX" style="${focus==='X'?'':'opacity:.55'}">${chips(LA,'X',st.duoX)}</div>`;
+  h+=`<div class="pairhead"><b style="color:${focus==='Y'?'var(--gold)':'var(--sub)'}">▶ 2体目（${LJ[B]}）</b>${Y?'：'+Y.c.name:''}${X||Y?'　<button class="helpbtn" id="duoClear">選び直す</button>':''}</div><div class="pool" id="duoPoolY" style="${focus==='Y'?'':'opacity:.55'}">${chips(LB,'Y',st.duoY)}</div>`;
+  if(X&&Y){const d=duo(X,Y);
+    h+=`<div class="pairhead" style="font-size:15px">${X.c.name} ＋ ${Y.c.name}：<b class="ms" style="font-size:20px">${d.v.toFixed(2)}%</b>　（${X.c.name}の相手モデル強さ ${X.ms.toFixed(2)}／${Y.c.name} ${Y.ms.toFixed(2)}／2人の相性 ${d.s.src==='有'?(d.s.d>=0?'+':'')+d.s.d.toFixed(2):'データなし'}）</div>`}
+  // 表：1体目だけ選んだら相方の順位、2体目だけなら1体目の順位、どちらもなければ全体の上位
+  let rows=[],title='';
+  if(X&&!Y||X&&Y){rows=LB.map(y=>({x:X,y,...duo(X,y)}));title=`${X.c.name}の相方ランキング（${LJ[B]}）`}
+  else if(Y){rows=LA.map(x=>({x,y:Y,...duo(x,Y)}));title=`${Y.c.name}の相方ランキング（${LJ[A]}）`}
+  else{const xa=LA.slice(0,40),yb=LB.slice(0,40);for(const x of xa)for(const y of yb)rows.push({x,y,...duo(x,y)});title='デュオの上位（人気上位40体どうし）'}
+  rows.sort((a,b)=>b.v-a.v);
+  h+=`<div class="pairhead" style="margin-top:8px"><b>${title}</b></div><table><thead><tr><th>#</th><th class="l">${LJ[A]}</th><th class="l">${LJ[B]}</th><th class="nw">デュオの期待勝率</th><th>2人の相性</th><th>${LJ[A]}の相手モデル強さ</th><th>${LJ[B]}の相手モデル強さ</th></tr></thead><tbody>`;
+  rows.slice(0,20).forEach((p,i)=>{h+=`<tr class="${i<3?'top3':''}"><td class="rank">${i+1}</td><td class="l"><div class="ch">${img(S,p.x.c.id)}${p.x.c.name}</div></td><td class="l"><div class="ch">${img(S,p.y.c.id)}${p.y.c.name}</div></td>`+
+    `<td class="nw ms">${p.v.toFixed(2)}</td><td style="color:${p.s.d>0?'var(--good)':p.s.d<0?'var(--bad)':'var(--sub)'}">${p.s.src==='有'?(p.s.d>=0?'+':'')+p.s.d.toFixed(2):'—'}</td><td>${p.x.ms.toFixed(2)}</td><td>${p.y.ms.toFixed(2)}</td></tr>`});
+  h+='</tbody></table>';
+  if(!LA.some(r=>r.c.lanes[A].team))h+='<div class="pairhead" style="color:var(--mid)">このデータには味方の相性が入っていないので、2人の相性は「—」になります（batの3で補強すると入ります）。</div>';
+  $('wrap').innerHTML=h;bindPairMode();
+  const onPick=e=>{const b=e.target.closest('button');if(!b)return;const id=b.dataset.id;
+    if(b.dataset.slot==='X'){st.duoX=st.duoX===id?null:id;if(st.duoX)st.duoFocus='Y'}else{st.duoY=st.duoY===id?null:id;if(st.duoY&&!st.duoX)st.duoFocus='X'}render()};
+  $('duoPoolX').onclick=onPick;$('duoPoolY').onclick=onPick;
+  $('duoB').onchange=e=>{st.duoB=e.target.value;st.duoY=null;render()};
+  const c=$('duoClear');if(c)c.onclick=()=>{st.duoX=null;st.duoY=null;st.duoFocus='X';render()};
+}
+
+function renderPairs(S){
+  if(st.pairMode==='duo')return renderDuo(S);
+  const L=st.lane;
+  if(L==='all'){$('wrap').innerHTML=pairModeBar()+'<div class="empty">2体セットはレーンごとに組みます。<br>上の TOP / JG / MID / BOT / SUP のどれかを押してください。</div>';bindPairMode();return}
+  const o=settings(),pop=popIndex(S);
+  const all=[];
+  for(const c of S.champs){if(!c.lanes[L])continue;const r=evalLane(c,L,S,o,pop);if(r&&!r.few)all.push(r)}
+  all.sort((a,b)=>b.G-a.G);
+  const pool=new Set(POOL[L]||[]);
+  const usePool=all.filter(r=>pool.has(r.c.id)).length>=2;
+  let cands=(usePool?all.filter(r=>pool.has(r.c.id)):all).slice(0,60);
+  // 対面の分布（人気）
+  const U=pop[L];let tot=0;const ys=[];for(const nm in U){if(U[nm]>0){ys.push(nm);tot+=U[nm]}}
+  const uY={};for(const nm of ys)uY[nm]=U[nm]/tot;
+  // 後出しのときの勝率：その対面が分かった状態
+  for(const r of cands){
+    const m=r.mod[L];const dm={};
+    if(m)for(const x of m.sorted)dm[x.name]=x.d;
+    const base=r.msa-(m&&m.dv!=null?m.dv:0);
+    const def=m?m.Er:0;
+    r.after={};for(const nm of ys)r.after[nm]=base+(nm in dm?dm[nm]:def);
+    r.afterAvg=ys.reduce((s,nm)=>s+uY[nm]*r.after[nm],0);
+    r.single=o.pf*r.msa+(1-o.pf)*r.afterAvg;
+  }
+  const pairs=[];
+  for(let i=0;i<cands.length;i++)for(let j=i+1;j<cands.length;j++){
+    const X=cands[i],Z=cands[j];
+    let after=0;for(const nm of ys)after+=uY[nm]*Math.max(X.after[nm],Z.after[nm]);
+    const blind=X.msa>=Z.msa?X:Z,other=blind===X?Z:X;
+    const v=o.pf*blind.msa+(1-o.pf)*after;
+    pairs.push({blind,other,v,gain:v-Math.max(X.single,Z.single)});
+  }
+  pairs.sort((a,b)=>b.v-a.v);
+  const chips=all.slice(0,80).map(r=>`<button data-id="${r.c.id}" class="${pool.has(r.c.id)?'on':''}">${img(S,r.c.id)}${r.c.name}</button>`).join('');
+  let h=pairModeBar()+`<div class="pairhead">自分が使えるキャラ（${LJ[L]}）：<b>${usePool?pool.size+'体から組んでいます':'未選択のため全キャラから組んでいます'}</b>　熟練度は数字以上に効くので、使えるキャラだけ選ぶのがおすすめです。</div><div class="pool" id="pool">${chips}</div>`;
+  if(!pairs.length){h+='<div class="empty">組めるキャラが2体以上ありません。</div>'}
+  else{
+    h+='<table><thead><tr><th>#</th><th class="l">先出し用</th><th class="l">返し用</th><th class="nw">セットの期待勝率</th><th>1体だけより</th><th>先出し用の味方込み強さ</th><th>返し用の後出し勝率</th></tr></thead><tbody>';
+    pairs.slice(0,20).forEach((p,i)=>{
+      h+=`<tr class="${i<3?'top3':''}"><td class="rank">${i+1}</td>`+
+        `<td class="l"><div class="ch">${img(S,p.blind.c.id)}${p.blind.c.name}</div></td>`+
+        `<td class="l"><div class="ch">${img(S,p.other.c.id)}${p.other.c.name}</div></td>`+
+        `<td class="nw ms">${p.v.toFixed(2)}</td><td style="color:var(--good)">+${p.gain.toFixed(2)}</td>`+
+        `<td>${p.blind.msa.toFixed(2)}</td><td>${p.other.afterAvg.toFixed(2)}</td></tr>`;
+    });
+    h+='</tbody></table>';
+  }
+  $('wrap').innerHTML=h;
+  bindPairMode();
+  $('pool').onclick=e=>{const b=e.target.closest('button');if(!b)return;const id=b.dataset.id;const s=new Set(POOL[L]||[]);s.has(id)?s.delete(id):s.add(id);POOL[L]=[...s];savePool();render()};
+}
+
+function setView(v){st.view=v;$('views').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));render()}
+function init(){
+  $('set').innerHTML=sets.length?sets.map((s,i)=>`<option value="${i}">${s.label}</option>`).join(''):'<option>データなし</option>';
+  $('set').onchange=e=>{st.set=+e.target.value;render()};
+  $('tabs').innerHTML=['all'].concat(LANES).map(l=>`<button data-l="${l}" class="${st.lane===l?'on':''}">${l==='all'?'全部':LJ[l]}</button>`).join('');
+  $('tabs').onclick=e=>{const l=e.target.dataset.l;if(!l)return;st.lane=l;$('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));render()};
+  $('views').innerHTML=[['tier','Tier'],['rank','順位表'],['main','使い込む'],['pair','2体セット'],['sim','試しに引く'],['bt','答え合わせ']].map(([k,t])=>`<button data-v="${k}" class="${st.view===k?'on':''}">${t}</button>`).join('');
+  $('views').onclick=e=>{const v=e.target.dataset.v;if(!v)return;setView(v)};
+  $('vsc').innerHTML=LANES.map(v=>`<label><input type="checkbox" data-v="${v}" checked>${LJ[v]}</label>`).join('');
+  $('vsc').onchange=e=>{st.vs[e.target.dataset.v]=e.target.checked;render()};
+  ['mg','cg','th','np','al','pf','be'].forEach(id=>$(id).oninput=render);
+  ['hide','shr','meas','rd','pre','ally'].forEach(id=>$(id).onchange=render);
+  $('helpbtn').onclick=()=>$('help').classList.toggle('on');
+  let cm=null;try{cm=localStorage.getItem('blindCompact')}catch(e){}
+  st.compact=cm==null?(window.innerWidth<1100||window.innerHeight>window.innerWidth):cm==='1';
+  $('cmp').checked=st.compact;document.body.classList.toggle('compact',st.compact);
+  $('cmp').onchange=e=>{st.compact=e.target.checked;try{localStorage.setItem('blindCompact',st.compact?'1':'0')}catch(x){}document.body.classList.toggle('compact',st.compact);if(st.compact)st.sort='msa';render()};
+  $('setBtn').onclick=()=>document.body.classList.toggle('open');
+  if(st.compact)st.sort='msa';
+  render();
+}
+init();
+</script></body></html>
