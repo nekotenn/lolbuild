@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>オラフ top 早見カード</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E9EFF3; --surface:#FFFFFF; --ink:#1C2A38; --sub:#5B6B7A;
+  --blood:#B3261E; --frost:#3E7CA6; --ember:#C98A16; --line:#C9D4DC;
+  --good:#2E7D4F; --goodbg:#E3F1E8; --badbg:#F8E3E1; --tipbg:#F6EDD9;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#152029; --surface:#1E2C38; --ink:#E6EDF2; --sub:#9BADBC;
+    --blood:#E5574C; --frost:#7DB6DC; --ember:#E6B04A; --line:#33465A;
+    --good:#6CC793; --goodbg:#1C3A2B; --badbg:#3E2224; --tipbg:#3A3120;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#152029; --surface:#1E2C38; --ink:#E6EDF2; --sub:#9BADBC;
+  --blood:#E5574C; --frost:#7DB6DC; --ember:#E6B04A; --line:#33465A;
+  --good:#6CC793; --goodbg:#1C3A2B; --badbg:#3E2224; --tipbg:#3A3120;
+  color-scheme: dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  font-weight:500; line-height:1.5; font-size:15px;
+  display:flex; flex-direction:column; max-width:520px; margin:0 auto;
+}
+header{padding:8px 16px 0; display:flex; align-items:baseline; gap:10px}
+header h1{font-family:"Dela Gothic One",sans-serif; font-weight:400; font-size:22px; letter-spacing:.02em}
+header span{font-size:12px; color:var(--sub)}
+nav{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; padding:8px 12px 6px}
+nav button{
+  font:inherit; font-weight:700; font-size:13px; color:var(--sub);
+  background:var(--surface); border:2px solid var(--line); border-radius:10px 10px 4px 4px;
+  padding:6px 2px 5px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:1px;
+}
+nav button .ic{font-size:20px; line-height:1}
+nav button[aria-selected="true"]{color:#fff; background:var(--blood); border-color:var(--blood)}
+nav button:focus-visible, .pick button:focus-visible{outline:3px solid var(--frost); outline-offset:2px}
+main{flex:1; overflow-y:auto; padding:2px 12px 10px}
+section[hidden]{display:none}
+.big{
+  font-family:"Dela Gothic One",sans-serif; font-weight:400; font-size:21px; line-height:1.35;
+  padding:9px 14px; border-left:6px solid var(--blood); background:var(--surface); border-radius:4px 12px 12px 4px;
+  margin-bottom:10px;
+}
+.big small{display:block; font-family:"Zen Kaku Gothic New",sans-serif; font-weight:700; font-size:13px; color:var(--sub); margin-top:2px}
+.pick{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px}
+.pick button{
+  font:inherit; font-weight:900; font-size:15px; color:var(--ink); background:var(--surface);
+  border:2px solid var(--line); border-radius:14px; padding:9px 8px; cursor:pointer; line-height:1.35;
+}
+.pick button .ic{display:block; font-size:28px; margin-bottom:4px}
+.pick button[aria-pressed="true"]{border-color:var(--frost); box-shadow:inset 0 0 0 2px var(--frost)}
+.verdict{border-radius:14px; padding:10px 14px; margin-bottom:8px}
+.verdict.go{background:var(--goodbg)} .verdict.wait{background:var(--badbg)}
+.verdict b{font-family:"Dela Gothic One",sans-serif; font-weight:400; font-size:19px; display:block; margin-bottom:4px}
+.verdict.go b{color:var(--good)} .verdict.wait b{color:var(--blood)}
+.verdict p{font-size:14px}
+.chips{display:flex; flex-wrap:wrap; gap:5px; margin-top:6px}
+.chips span{font-size:13px; font-weight:700; background:var(--surface); border:1px solid var(--line); border-radius:99px; padding:2px 9px}
+.fixed{display:grid; grid-template-columns:repeat(3,1fr); gap:6px}
+.fixed div{background:var(--surface); border-radius:10px; padding:8px 6px; text-align:center}
+.fixed i{font-style:normal; display:block; font-size:11px; color:var(--sub); font-weight:700}
+.fixed b{font-size:14px}
+.hint{font-size:13px; color:var(--sub); margin:2px 2px 8px}
+ol.time{list-style:none; position:relative; padding-left:0}
+ol.time li{display:grid; grid-template-columns:62px 1fr; gap:10px; padding:6px 0; border-bottom:1px dashed var(--line)}
+ol.time li:last-child{border-bottom:0}
+ol.time .when{font-family:"Dela Gothic One",sans-serif; font-weight:400; font-size:14px; color:var(--frost); text-align:center; background:var(--surface); border-radius:8px; padding:6px 2px; align-self:start; line-height:1.25}
+ol.time strong{display:block; font-weight:900; font-size:15px}
+ol.time p{font-size:13.5px; color:var(--sub)}
+.rage{display:flex; align-items:center; gap:10px; background:var(--tipbg); border-radius:12px; padding:10px 12px; margin:8px 0}
+.rage .gauge{flex:0 0 64px; text-align:center; font-size:11px; font-weight:900; color:var(--sub)}
+.rage .bar{height:12px; border-radius:6px; background:linear-gradient(90deg,var(--blood) 0 30%, var(--line) 30%); margin:3px 0}
+.rage .gauge em{font-style:normal; color:var(--blood); font-size:13px}
+.rage p{font-size:13.5px}
+.rage b{color:var(--blood)}
+ul.do{list-style:none}
+ul.do li{display:flex; gap:10px; padding:9px 0; border-bottom:1px dashed var(--line); font-size:14.5px}
+ul.do li:last-child{border-bottom:0}
+ul.do .ic{flex:0 0 28px; font-size:22px; text-align:center}
+ul.do b{font-weight:900}
+.memo h2{font-family:"Dela Gothic One",sans-serif; font-weight:400; font-size:16px; margin:10px 0 4px}
+.memo p{font-size:14px; margin-bottom:6px}
+.memo .src{font-size:12px; color:var(--sub); margin-top:12px}
+@media (prefers-reduced-motion: no-preference){
+  section:not([hidden]){animation:in .18s ease-out}
+  @keyframes in{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
+}
+</style>
+</head>
+<body>
+<header><h1>🪓 オラフ top</h1><span>見たら、すぐ動く用</span></header>
+
+<nav role="tablist" aria-label="場面">
+  <button role="tab" aria-selected="true" data-tab="pre"><span class="ic">👁️</span>試合前</button>
+  <button role="tab" aria-selected="false" data-tab="early"><span class="ic">⚔️</span>序盤</button>
+  <button role="tab" aria-selected="false" data-tab="lose"><span class="ic">🛡️</span>負けた時</button>
+  <button role="tab" aria-selected="false" data-tab="memo"><span class="ic">📜</span>兄メモ</button>
+</nav>
+
+<main>
+  <!-- 試合前 -->
+  <section id="pre" role="tabpanel">
+    <div class="big">ロード画面で、相手topを見る<small>どっちのタイプ？ タップ</small></div>
+    <div class="pick">
+      <button aria-pressed="false" data-type="melee"><span class="ic">🤜</span>近くで<br>殴り合ってくる</button>
+      <button aria-pressed="false" data-type="ranged"><span class="ic">🏹</span>遠くから撃つ<br>／すぐ逃げる</button>
+    </div>
+    <div class="verdict go" id="v-melee" hidden>
+      <b>Lv1から勝てる。前に出ろ</b>
+      <p>斧（Q）をミニオンごと相手に当てて、CSを取りに来たら殴る。<br>1個目の大きい装備：<strong>ラヴァナス ハイドラ</strong></p>
+    </div>
+    <div class="verdict wait" id="v-ranged" hidden>
+      <b>序盤は追いかけない</b>
+      <p>追っても逃げられて削られるだけ。ミニオンを取ってLv6（R）を待つ。<br>1個目の大きい装備：<strong>ストライドブレイカー</strong>（追いつく用）</p>
+    </div>
+    <p class="hint">この名前が来たら、近接でも「序盤は様子見」側：</p>
+    <div class="chips"><span>トリンダメア</span><span>ケネン</span><span>クイン</span><span>ヴェイン</span><span>ケイル</span><span>クレッド</span><span>トランドル</span><span>ガレン</span><span>カミール</span></div>
+    <div class="fixed" style="margin-top:12px">
+      <div><i>ルーン</i><b>征服者</b></div>
+      <div><i>スペル</i><b>フラッシュ<br>＋ゴースト</b></div>
+      <div><i>先に上げる</i><b>Q（斧）</b></div>
+    </div>
+  </section>
+
+  <!-- 序盤 -->
+  <section id="early" role="tabpanel" hidden>
+    <ol class="time">
+      <li><span class="when">Lv<br>1〜3</span><div><strong>一番強い時間。殴りに行く</strong><p>斧を当て続ければ、相手はCSを取りに前に出られない。</p></div></li>
+      <li><span class="when">4波目<br>まで</span><div><strong>倒せたら、押し込んで帰る</strong><p>先に1キル取れたら「ヴァンパイア セプター」を買う。回復で殴り勝てるようになる。</p></div></li>
+      <li><span class="when">敵森<br>不明</span><div><strong>押しすぎない</strong><p>敵のジャングラーが見えない時に深追いすると、2対1で狩られる。</p></div></li>
+      <li><span class="when">Lv<br>6</span><div><strong>Rは「止められない」ボタン</strong><p>斧が当たったら R（＋ゴースト）で倒しきる。逃げ技のない相手はほぼ逃げられない。</p></div></li>
+      <li><span class="when">グラブ</span><div><strong>序盤のヴォイドグラブに寄る</strong><p>オラフは序盤が強いので、取り合いで勝ちやすい。</p></div></li>
+    </ol>
+    <div class="rage">
+      <div class="gauge" aria-hidden="true">体力<div class="bar"></div><em>⇧強い</em></div>
+      <p>体力が<b>減るほど強くなる</b>キャラ。半分でも引かなくていい。<br>ただし体力が少ない時は、E（自分の体力を削る技）を先に使わず、<b>最後のトドメ</b>に。</p>
+    </div>
+  </section>
+
+  <!-- 負けた時 -->
+  <section id="lose" role="tabpanel" hidden>
+    <div class="big">レーンで取り返さない。<br>別の場所で勝つ<small>オラフは負けてからの1対1では戻れない</small></div>
+    <ul class="do">
+      <li><span class="ic">🚫</span><div><b>相手と1対1しない。</b>タワーの下でCSだけ取る。</div></li>
+      <li><span class="ic">🏃</span><div><b>タワーを取られてもいい。</b>その間にミッドの小競り合い・ドラゴン・グラブに絡めたら得。</div></li>
+      <li><span class="ic">🪓</span><div><b>集団戦はRがある時だけ突っ込む。</b>狙うのは、逃げ足のない後ろの敵。味方を置いて1人で行かない。</div></li>
+      <li><span class="ic">🧱</span><div><b>固くする。</b>靴は「プレート スチールキャップ」、次に「デス ダンス」。</div></li>
+      <li><span class="ic">⏱️</span><div><b>25分までに決めたい。</b>長引くほどオラフは弱くなる。味方と早めに戦う。</div></li>
+    </ul>
+  </section>
+
+  <!-- 兄メモ -->
+  <section id="memo" role="tabpanel" hidden class="memo">
+    <h2>オラフの寿命</h2>
+    <p>序盤から強く、15〜25分が全盛期。終盤は相手が固くなって弱くなる。だから「早く有利を作って、早く終わらせる」キャラ。</p>
+    <h2>一番の天敵</h2>
+    <p>距離を取れる相手・ダッシュで逃げる相手。Rの間に追いつけないと何もできない。斧（Q）を外す＝追えない、なので横で言うなら「斧当たってる？」の一言でいい。</p>
+    <h2>負けても残る仕事</h2>
+    <p>Rの間は止められないので、レーンで負けても集団戦で後衛に入る役は残る。レーンの勝ち負けより「Rがある時にどこにいるか」を見る。</p>
+    <h2>相性の数字はぶれる</h2>
+    <p>サイトやパッチで「不利な相手」の顔ぶれが変わる。共通してるのは「遠距離・逃げ技持ち・序盤に強い近接」。名前より型で覚えさせる方が長持ちする。</p>
+    <p class="src">参考：Mobalyticsのオラフtopガイドと相性表、チャレンジャー常連Federals1のオラフtopガイド（Mobafire）、Lolalytics・MetaBotの相性データ。装備名は日本語クライアントと表記が少し違う場合あり。</p>
+  </section>
+</main>
+
+<script>
+(function(){
+  var tabs = document.querySelectorAll('nav button');
+  tabs.forEach(function(t){
+    t.addEventListener('click', function(){
+      tabs.forEach(function(x){ x.setAttribute('aria-selected', x===t ? 'true':'false'); });
+      document.querySelectorAll('section').forEach(function(s){ s.hidden = s.id !== t.dataset.tab; });
+      document.querySelector('main').scrollTop = 0;
+    });
+  });
+  var picks = document.querySelectorAll('.pick button');
+  picks.forEach(function(p){
+    p.addEventListener('click', function(){
+      picks.forEach(function(x){ x.setAttribute('aria-pressed', x===p ? 'true':'false'); });
+      document.getElementById('v-melee').hidden = p.dataset.type !== 'melee';
+      document.getElementById('v-ranged').hidden = p.dataset.type !== 'ranged';
+    });
+  });
+})();
+</script>
+</body>
+</html>
