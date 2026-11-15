@@ -825,6 +825,7 @@ function renderPairs(S){
 function setView(v){st.view=v;$('views').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));render()}
 function init(){
   $('set').innerHTML=sets.length?sets.map((s,i)=>`<option value="${i}">${s.label}</option>`).join(''):'<option>データなし</option>';
+  {const e=sets.findIndex(s=>s.tier==='emerald_plus');if(e>=0)st.set=e;$('set').value=st.set}
   $('set').onchange=e=>{st.set=+e.target.value;render()};
   $('tabs').innerHTML=['all'].concat(LANES).map(l=>`<button data-l="${l}" class="${st.lane===l?'on':''}">${l==='all'?'全部':LJ[l]}</button>`).join('');
   $('tabs').onclick=e=>{const l=e.target.dataset.l;if(!l)return;st.lane=l;$('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));render()};
