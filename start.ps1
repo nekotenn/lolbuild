@@ -32,6 +32,17 @@ try {
     Write-Host 'デスクトップに「ツール置き場」を作りました'
   }
 } catch {}
+# --- 週1のデータ更新を登録（毎週日曜10時。PCが切れていたら次に起動したとき動く）---
+try {
+  $ps = Join-Path $dir 'weekly.ps1'
+  if (Test-Path $ps) {
+    $act = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument ('-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $ps + '"') -WorkingDirectory $dir
+    $trg = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At 10:00
+    $set = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 4)
+    $null = Register-ScheduledTask -TaskName 'LoLツール 週1データ更新' -Action $act -Trigger $trg -Settings $set -Force
+    Unregister-ScheduledTask -TaskName 'LoLビルド データ更新' -Confirm:$false -ErrorAction SilentlyContinue
+  }
+} catch { Write-Host '週1の自動更新は登録できませんでした' }
 foreach ($c in @('swain', 'tahmkench')) {
   $df = Join-Path $dir "data_$c.json"
   $old = $false
