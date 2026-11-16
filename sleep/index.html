@@ -36,7 +36,7 @@ button[aria-pressed="true"]{background:#3a2f17;border-color:var(--warm);color:va
 <body>
 <header>
   <h1>寝るまでの坂</h1>
-  <button id="voice" aria-pressed="false">🔈 声をオンにする</button>
+  <div style="display:flex;gap:6px;align-items:center"><select id="vsel" aria-label="声の種類" style="font:inherit;font-size:12px;color:var(--ink);background:#1d2633;border:1px solid var(--line);border-radius:999px;padding:6px 8px;max-width:9.5em"></select><button id="voice" aria-pressed="false">🔈 声をオンにする</button></div>
 </header>
 <div class="top">
   <div class="clock" id="clock">--:--</div>
@@ -68,11 +68,14 @@ const day=()=>{const d=new Date();return Math.floor((d-new Date(d.getFullYear(),
 
 // 声
 let voiceOn=false,jaVoice=null;
-function pickVoice(){const vs=speechSynthesis.getVoices().filter(v=>/ja/i.test(v.lang));
-  jaVoice=vs.find(v=>/Nanami|Ayumi|Haruka|Kyoko|Google/.test(v.name))||vs[0]||null}
+function pickVoice(){const vs=speechSynthesis.getVoices().filter(v=>/ja/i.test(v.lang));let saved='';try{saved=localStorage.getItem('slopeVoice')||''}catch(e){}
+  jaVoice=vs.find(v=>v.name===saved)||vs.find(v=>/Nanami|Google|Ayumi|Haruka|Kyoko/.test(v.name))||vs[0]||null;
+  const sel=document.getElementById('vsel');sel.innerHTML=vs.map(v=>`<option value="${v.name}">${v.name.replace(/Microsoft |- Japanese \(Japan\)| \(.*\)/g,'').trim()}</option>`).join('');
+  if(jaVoice)sel.value=jaVoice.name;sel.style.display=vs.length?'':'none'}
 if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
 function say(text){if(!voiceOn||!('speechSynthesis' in window))return;const u=new SpeechSynthesisUtterance(text);
-  u.lang='ja-JP';if(jaVoice)u.voice=jaVoice;u.rate=.95;speechSynthesis.cancel();speechSynthesis.speak(u)}
+  u.lang='ja-JP';if(jaVoice)u.voice=jaVoice;u.rate=.95;u.pitch=1.15;speechSynthesis.cancel();speechSynthesis.speak(u)}
+document.getElementById('vsel').onchange=e=>{const vs=speechSynthesis.getVoices();jaVoice=vs.find(v=>v.name===e.target.value)||jaVoice;try{localStorage.setItem('slopeVoice',e.target.value)}catch(x){}if(voiceOn)say('この声でお知らせします。')};
 const vb=document.getElementById('voice');
 vb.onclick=()=>{voiceOn=!voiceOn;vb.setAttribute('aria-pressed',voiceOn);vb.textContent=voiceOn?'🔊 声オン':'🔈 声をオンにする';
   if(voiceOn)say('声をオンにしました。決まった時刻にお知らせします。')};
