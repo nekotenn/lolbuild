@@ -36,6 +36,7 @@ a.main:focus-visible::after,.card:hover{outline:2px solid var(--gold);outline-of
     <button data-g="all" aria-pressed="true">すべて</button>
     <button data-g="data" aria-pressed="false">データ調査</button>
     <button data-g="game" aria-pressed="false">試合中</button>
+    <button data-g="life" aria-pressed="false">生活</button>
     <button data-g="doc" aria-pressed="false">ガイド・メモ</button>
   </div>
   <div id="list"></div>
@@ -43,7 +44,7 @@ a.main:focus-visible::after,.card:hover{outline:2px solid var(--gold);outline-of
 <script>
 // ツールを足すときは、ここに1行足すだけ（where: web / claude）
 const BASE='https://nekotenn.github.io/lolbuild/';
-const GROUPS={data:'データ調査（よく使う）',game:'試合中の画面',doc:'ガイド・メモ'};
+const GROUPS={data:'データ調査（よく使う）',game:'試合中の画面',life:'生活',doc:'ガイド・メモ'};
 const TOOLS=[
   {g:'data',name:'ブラインド強さ順位',icon:'🎯',where:'web',url:BASE+'blind/',
    desc:'先出しに強いキャラの順位。正規版の列つき。データ入り（全ランク 11/08）。',
@@ -57,6 +58,10 @@ const TOOLS=[
    desc:'相手ボットに合わせる対面ボード。Web版は名前を入れて使う。',alt:[{t:'Claude版',u:'https://claude.ai/artifact/MBEw9c2CMh7f4y7T7nUbAJ'}]},
   {g:'game',name:'オラフ top 早見カード',icon:'🪓',where:'web',url:BASE+'olaf/',
    desc:'弟向けのオラフ早見カード。',alt:[{t:'Claude版',u:'https://claude.ai/artifact/5jsU2GyPrS5fztrVa6M7Ev'}]},
+  {g:'life',name:'寝るまでの坂（試作）',icon:'🌙',where:'web',url:BASE+'sleep/',
+   desc:'縦モニター用。20:30〜23:00を坂で見せ、決まった時刻に声でお知らせ。開いたら「声をオン」を1回押す。',alt:[{t:'90秒デモ',u:BASE+'sleep/?demo=1'}]},
+  {g:'life',name:'留守番ノート',icon:'🏠',where:'claude',url:'https://claude.ai/artifact/N6jtkkzBThjac3Xh61Xh6Y',desc:'留守中にClaudeが調べたことと、聞きたいこと。'},
+  {g:'life',name:'1分体験ティザー',icon:'⏱️',where:'claude',url:'https://claude.ai/artifact/4iCLJWUbND4g3GZJJXg1WG',desc:'配車係ツアー・歯磨きゴーグル・寝る前1分。'},
   {g:'doc',name:'スウェイン究極ガイド',icon:'📄',where:'claude',url:'https://claude.ai/artifact/9vcbJiZPz7JfqDuWfGFdRb',desc:'ボット心の鋼／ミッド。'},
   {g:'doc',name:'ヴェイン集団戦ガイド',icon:'📄',where:'claude',url:'https://claude.ai/artifact/95hJaprWnaJrGSVHBpFgKK',desc:'自分用。'},
   {g:'doc',name:'スウェイン変わり種 設計書',icon:'📄',where:'claude',url:'https://claude.ai/artifact/S8bQffPCGS6NJZBCdTXkQN',desc:'変わり種ビルド探しの設計。'},

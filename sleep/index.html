@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>寝るまでの坂</title>
+<style>
+:root{--bg:#10151d;--ink:#e9eef4;--sub:#8f9cab;--line:#2a3442;--warm:#f0b35a;--now:#ffd27a;--done:#4b5767;--cool:#7fb3e6}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--ink);font-family:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;
+  display:flex;flex-direction:column;height:100dvh;padding:max(14px,env(safe-area-inset-top)) 16px max(14px,env(safe-area-inset-bottom));gap:10px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+h1{font-size:15px;font-weight:700;color:var(--sub);letter-spacing:.08em}
+button{font:inherit;font-size:13px;color:var(--ink);background:#1d2633;border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer}
+button[aria-pressed="true"]{background:#3a2f17;border-color:var(--warm);color:var(--now)}
+.top{text-align:center}
+.clock{font-size:clamp(48px,14vw,120px);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em;line-height:1}
+.remain{margin-top:6px;font-size:clamp(14px,3.6vw,22px);color:var(--sub)}
+.remain b{color:var(--now);font-weight:700}
+.hill{flex:1;min-height:0;position:relative}
+.hill svg{width:100%;height:100%;display:block}
+.lab{font-size:3.4px;fill:var(--sub)}
+.lab .tt{font-variant-numeric:tabular-nums;fill:var(--done);font-weight:400}
+.lab.cur{fill:var(--now);font-weight:700;font-size:4.2px}
+.lab.past{fill:var(--done)}
+.card{border:1px solid var(--line);border-radius:16px;padding:14px 16px;background:#161d27}
+.card .k{font-size:12px;color:var(--sub)}
+.card .v{font-size:clamp(22px,6vw,40px);font-weight:700;margin-top:4px;color:var(--now)}
+.card .d{font-size:clamp(13px,3.4vw,18px);color:var(--ink);margin-top:4px;opacity:.85}
+.card .n{font-size:13px;color:var(--sub);margin-top:8px}
+#dim{position:fixed;inset:0;pointer-events:none;background:#1a0d00;opacity:0;transition:opacity 2s}
+.demo{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);font-size:11px;color:#000;background:var(--warm);padding:2px 8px;border-radius:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>寝るまでの坂</h1>
+  <button id="voice" aria-pressed="false">🔈 声をオンにする</button>
+</header>
+<div class="top">
+  <div class="clock" id="clock">--:--</div>
+  <div class="remain" id="remain"></div>
+</div>
+<div class="hill"><svg id="svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" aria-label="寝るまでの坂"></svg></div>
+<div class="card" id="card"><div class="k">今やること</div><div class="v" id="nowName">―</div><div class="d" id="nowDo"></div><div class="n" id="next"></div></div>
+<div id="dim"></div>
+<script>
+// セリフと時刻は lines.json で変える（Claudeが毎日書き換えられる）
+const FALLBACK={end:"22:30",bed:"23:00",steps:[
+ {t:"20:30",name:"坂の入口",do:"部屋の明かりを1段落とす",say:["8時半です。ここから坂をくだります。"]},
+ {t:"21:00",name:"お風呂",do:"お風呂に入るならこの1時間のうち",say:["9時です。お風呂の時間です。"]},
+ {t:"21:45",name:"最後の1試合を決める",do:"次に始める試合を、今日の最後にする",say:["9時45分です。次の試合を今日の最後にしましょう。"]},
+ {t:"22:00",name:"新しい試合には入らない",do:"今の試合は最後までやってOK",say:["10時です。新しい試合には入りません。"]},
+ {t:"22:15",name:"歯磨きと軽いストレッチ",do:"ゆっくり伸ばすだけ",say:["10時15分です。歯磨きに行きましょう。"]},
+ {t:"22:30",name:"全部おわり",do:"画面を消して、寝る支度",say:["10時半です。今日はもう全部終わりです。"]},
+ {t:"23:00",name:"おやすみ",do:"",say:["11時です。おやすみなさい。"]}]};
+let D=FALLBACK;
+const qs=new URLSearchParams(location.search), DEMO=qs.has('demo');
+const m=s=>{const[a,b]=s.split(':').map(Number);return a*60+b};
+const fmt=x=>{x=((x%1440)+1440)%1440;return String(Math.floor(x/60)).padStart(2,'0')+':'+String(Math.floor(x%60)).padStart(2,'0')};
+const dur=x=>{x=Math.max(0,Math.round(x));const h=Math.floor(x/60),mm=x%60;return (h?h+'時間':'')+mm+'分'};
+// 今の時刻（分）。デモは 20:20→23:05 を90秒で回す
+const t0=performance.now();
+function nowMin(){if(DEMO){return m('20:20')+((performance.now()-t0)/1000)*(165/90)}
+  const d=new Date();return d.getHours()*60+d.getMinutes()+d.getSeconds()/60}
+const day=()=>{const d=new Date();return Math.floor((d-new Date(d.getFullYear(),0,0))/864e5)};
+
+// 声
+let voiceOn=false,jaVoice=null;
+function pickVoice(){const vs=speechSynthesis.getVoices().filter(v=>/ja/i.test(v.lang));
+  jaVoice=vs.find(v=>/Nanami|Ayumi|Haruka|Kyoko|Google/.test(v.name))||vs[0]||null}
+if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function say(text){if(!voiceOn||!('speechSynthesis' in window))return;const u=new SpeechSynthesisUtterance(text);
+  u.lang='ja-JP';if(jaVoice)u.voice=jaVoice;u.rate=.95;speechSynthesis.cancel();speechSynthesis.speak(u)}
+const vb=document.getElementById('voice');
+vb.onclick=()=>{voiceOn=!voiceOn;vb.setAttribute('aria-pressed',voiceOn);vb.textContent=voiceOn?'🔊 声オン':'🔈 声をオンにする';
+  if(voiceOn)say('声をオンにしました。決まった時刻にお知らせします。')};
+
+// 坂を描く（縦に下る）
+const svg=document.getElementById('svg');
+const T0=()=>m(D.steps[0].t)-10, T1=()=>m(D.bed||D.steps.at(-1).t)+5;
+const Y=t=>6+88*Math.min(1,Math.max(0,(t-T0())/(T1()-T0())));
+const X=y=>14+ 30*Math.pow((y-6)/88,1.6);   // 下に行くほど右へ寝ていくカーブ
+function drawStatic(){
+  let p='';for(let i=0;i<=40;i++){const y=6+88*i/40;p+=(i?'L':'M')+X(y).toFixed(2)+' '+y.toFixed(2)}
+  svg.innerHTML=`<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fb3e6"/><stop offset=".55" stop-color="#f0b35a"/><stop offset="1" stop-color="#6b3b12"/></linearGradient></defs>
+  <path d="${p}" fill="none" stroke="url(#g)" stroke-width="1.4" stroke-linecap="round" opacity=".9"/>
+  <g id="marks"></g><circle id="dot" r="2.6" fill="#ffd27a"><animate attributeName="r" values="2.2;3;2.2" dur="2.4s" repeatCount="indefinite"/></circle>`;
+}
+function drawMarks(now){
+  const g=document.getElementById('marks');let h='';const cur=curIdx(now);
+  D.steps.forEach((s,i)=>{const y=Y(m(s.t)),x=X(y);const cls=i===cur?'cur':(m(s.t)<now?'past':'');
+    h+=`<circle cx="${x}" cy="${y}" r="${i===cur?1.6:1.1}" fill="${i===cur?'#ffd27a':(cls?'#4b5767':'#8f9cab')}"/>
+    <text class="lab ${cls}" x="${x+3.5}" y="${y+1.2}"><tspan class="tt">${s.t}</tspan>  ${s.name}</text>`});
+  g.innerHTML=h;
+}
+function curIdx(now){let k=-1;D.steps.forEach((s,i)=>{if(m(s.t)<=now)k=i});return k}
+
+// 毎秒の更新
+const fired=new Set();
+function key(s){return (DEMO?'demo':new Date().toDateString())+s.t}
+function tick(){
+  const now=nowMin();document.getElementById('clock').textContent=fmt(now);
+  const end=m(D.end),start=m(D.steps[0].t),bed=m(D.bed||'23:00');
+  const late=now<5*60;  // 深夜0〜5時も「坂の下」扱い
+  const rm=document.getElementById('remain');
+  if(late)rm.innerHTML='とっくに坂の下です。<b>もう寝る時間</b>';
+  else if(now<start)rm.innerHTML=`坂の入口（${D.steps[0].t}）まで <b>${dur(start-now)}</b>`;
+  else if(now<end)rm.innerHTML=`全部おわり（${D.end}）まで <b>${dur(end-now)}</b>`;
+  else if(now<bed)rm.innerHTML=`寝る時刻（${D.bed}）まで <b>${dur(bed-now)}</b>`;
+  else rm.innerHTML='<b>おやすみの時間です</b>';
+  const i=late?D.steps.length-1:curIdx(now),s=D.steps[i],n=D.steps[i+1];
+  document.getElementById('nowName').textContent=s?s.name:'まだ坂の前';
+  document.getElementById('nowDo').textContent=s?s.do:'好きに過ごしてOK';
+  document.getElementById('next').textContent=n?`次 ${n.t}：${n.name}`:(s?'':'');
+  const yy=Y(late?T1():Math.min(Math.max(now,T0()),T1()));const dot=document.getElementById('dot');dot.setAttribute('cx',X(yy));dot.setAttribute('cy',yy);
+  drawMarks(late?9999:now);
+  // 画面そのものを少しずつ暗く（坂の入口0 → 22:30で0.5）
+  const dimv=late?.55:Math.min(.55,Math.max(0,(now-start)/(end-start)*.5));document.getElementById('dim').style.opacity=dimv;
+  // 時刻を過ぎて10分以内なら1回だけしゃべる
+  for(const st of D.steps){const k=key(st);if(now>=m(st.t)&&now<m(st.t)+10&&!fired.has(k)){fired.add(k);
+    try{if(!DEMO&&localStorage.getItem('slope:'+k))continue;localStorage.setItem('slope:'+k,'1')}catch(e){}
+    const v=st.say||[];say(v[(day())%v.length]||st.name)}}
+}
+fetch('lines.json?v='+Date.now()).then(r=>r.json()).then(j=>{if(j&&j.steps&&j.steps.length)D=j}).catch(()=>{}).finally(()=>{drawStatic();tick();setInterval(tick,DEMO?250:1000)});
+if(DEMO){const b=document.createElement('div');b.className='demo';b.textContent='デモ：20:20〜23:05を90秒で';document.body.appendChild(b)}
+</script>
+</body>
+</html>
