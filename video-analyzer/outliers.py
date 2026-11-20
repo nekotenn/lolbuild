@@ -123,7 +123,7 @@ def md_table(items):
 
 def main():
     if not KEY:
-        sys.exit('GOOGLE_API_KEY がありません（GitHubのSecretsに登録）')
+        print('GOOGLE_API_KEY がないので何もしない（PC版 F:\\tools\\outliers が毎夜動く）'); return
     presets = json.load(open(os.path.join(HERE, 'presets.json'), encoding='utf-8'))
     prompt_tpl = open(os.path.join(HERE, 'prompt.txt'), encoding='utf-8').read()
     today = (dt.datetime.utcnow() + dt.timedelta(hours=9)).strftime('%Y-%m-%d')
