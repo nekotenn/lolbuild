@@ -1,0 +1,32 @@
+name: 外れ値 毎夜
+on:
+  schedule:
+    - cron: '43 17 * * *'   # 毎日 2:43（日本時間）
+  workflow_dispatch: {}     # ボタンで今すぐ動かせる
+permissions:
+  contents: write
+concurrency:
+  group: outliers
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests
+      - name: 外れ値を探して分解する
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: python video-analyzer/outliers.py
+      - name: 結果を保存（GitHub Pagesでスマホから見える）
+        run: |
+          git config user.name "outliers-bot"
+          git config user.email "outliers-bot@users.noreply.github.com"
+          git add video-analyzer/data
+          git diff --cached --quiet || git commit -m "外れ値 $(TZ=Asia/Tokyo date +%F)"
+          git pull --rebase --autostash
+          git push

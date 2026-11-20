@@ -12,3 +12,6 @@ update.ps1
 update_auto.bat
 update_data.bat
 weekly.ps1
+tts_en.py
+tts_setup.ps1
+tts_say.bat

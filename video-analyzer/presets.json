@@ -1,0 +1,37 @@
+[
+ {
+  "id": "lol_ja_short",
+  "label": "LoLショート（日本語）",
+  "q": [
+   "LoL ショート",
+   "リーグオブレジェンド 切り抜き",
+   "LoL 初心者",
+   "LoL ずんだもん",
+   "ロル 面白い"
+  ],
+  "lang": "ja",
+  "dur": "short",
+  "days": 60,
+  "min_avg": 3,
+  "min_sub": 3,
+  "goal": "日本語のLoLショート（ずんだもん＋四国めたん、本人の試合録画）で、12月末までに収益化の条件を満たすため"
+ },
+ {
+  "id": "hist_en_long",
+  "label": "英語・歴史／奇妙な話の長尺",
+  "q": [
+   "japanese history documentary",
+   "strange japan",
+   "dark history japan",
+   "japan mysteries",
+   "history for sleep japan",
+   "weird history"
+  ],
+  "lang": "en",
+  "dur": "long",
+  "days": 180,
+  "min_avg": 3,
+  "min_sub": 5,
+  "goal": "英語圏向けの長い解説動画（日本の歴史・奇妙な話、英語のAI音声、自分の台本）で平均視聴時間を稼ぎ、4,000時間に届かせるため"
+ }
+]

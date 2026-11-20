@@ -24,6 +24,12 @@ try {
     exit
   }
 } catch { Write-Host '更新の確認はスキップしました（オフラインなど）' }
+# --- 英語の読み上げ（Kokoro）を裏で1回だけ準備（失敗しても起動は続ける）---
+try {
+  if (-not (Test-Path (Join-Path $dir 'tts_ready.txt')) -and (Test-Path (Join-Path $dir 'tts_setup.ps1'))) {
+    Start-Process powershell.exe -WindowStyle Hidden -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',(Join-Path $dir 'tts_setup.ps1'))
+  }
+} catch {}
 # --- デスクトップに「ツール置き場」が無ければ作る ---
 try {
   $hub = Join-Path ([Environment]::GetFolderPath('Desktop')) 'ツール置き場.url'

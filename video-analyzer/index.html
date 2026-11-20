@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>動画ぶんかい器</title>
+<style>
+/* VOICE: 作業台。迷わせない、数字が主役
+   IDEA: 編集室の絵コンテ台（探す→分解→まとめ）
+   PICTURE: 外れ値の表と、分解カードそのもの
+   COLOUR/TYPE: 白／深い墨、アクセントは録画ランプの赤
+   LAYOUT: 上に3つの段、1カラム、スマホでも縦に流れる */
+:root{color-scheme:light dark;--bg:light-dark(#fbfbf8,#111214);--card:light-dark(#fff,#1b1c20);--ink:light-dark(#16171a,#ececec);--mut:light-dark(#62656c,#a3a6ad);--line:light-dark(#e3e3dd,#2c2e33);--rec:#e5322d;--ok:#1f8a5b}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;overflow-x:clip}
+header{padding:20px max(4vw,14px) 8px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+h1{font-size:28px;line-height:1.1;margin:0;display:flex;align-items:center;gap:10px}
+h1 i{width:14px;height:14px;border-radius:50%;background:var(--rec);display:inline-block;box-shadow:0 0 0 4px color-mix(in srgb,var(--rec) 20%,transparent)}
+nav{display:flex;gap:6px;flex-wrap:wrap;padding:6px max(4vw,14px) 0}
+nav button{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 16px;border-radius:999px;font-size:15px;min-height:44px;cursor:pointer}
+nav button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+main{padding:12px max(4vw,14px) 60px;max-width:1240px}
+section{display:none}section.on{display:block}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0}
+label{display:block;font-size:14px;color:var(--mut);margin:10px 0 4px}
+input,select,textarea{width:100%;font:16px/1.4 inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+textarea{min-height:140px;font-family:ui-monospace,Consolas,monospace;font-size:14px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.btn{background:var(--rec);color:#fff;border:0;border-radius:10px;padding:12px 18px;font-size:16px;font-weight:700;min-height:44px;cursor:pointer;margin:12px 8px 0 0}
+.btn.sub{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:400}
+.btn:disabled{opacity:.5;cursor:wait}
+:focus-visible{outline:3px solid var(--rec);outline-offset:2px}
+.log{font:13px/1.5 ui-monospace,Consolas,monospace;color:var(--mut);white-space:pre-wrap;max-height:180px;overflow:auto;margin-top:10px}
+.note{font-size:14px;color:var(--mut)}
+.note a{color:inherit}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ratio{font-weight:800;color:var(--rec)}
+.card h3{margin:0 0 4px;font-size:17px}
+.card .k{font-size:13px;color:var(--mut);margin-top:10px}
+.card ul{margin:4px 0;padding-left:1.2em}
+.pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);margin:2px 4px 2px 0}
+.bad{color:var(--rec)}.good{color:var(--ok)}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:14px}
+@media(max-width:600px){h1{font-size:24px}}
+@media(prefers-reduced-motion:no-preference){h1 i{animation:b 1.6s infinite}@keyframes b{50%{opacity:.35}}}
+</style>
+</head>
+<body>
+<header><h1><i></i>動画ぶんかい器</h1><span class="note" id="who">キー未設定</span></header>
+<nav>
+  <button data-t="key">0 キー</button>
+  <button data-t="night">毎夜の外れ値</button>
+  <button data-t="find">1 探す</button>
+  <button data-t="cut">2 分解</button>
+  <button data-t="sum">3 まとめ</button>
+</nav>
+<main>
+
+<section id="key">
+  <div class="box">
+    <label for="k">Gemini APIキー（このブラウザの中にだけ保存。外には送らない）</label>
+    <input id="k" type="password" autocomplete="off" placeholder="AIza...">
+    <button class="btn" id="saveKey">保存して確かめる</button>
+    <div class="log" id="keyLog"></div>
+    <p class="note">キーの作り方：<a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> を開く →「APIキーを作成」→ 出た文字をここに貼る。<br>
+    「1 探す」を使うときだけ、同じプロジェクトで <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank">YouTube Data API v3</a> を「有効にする」を1回押す（無料）。</p>
+  </div>
+</section>
+
+<section id="night">
+  <div class="box"><p class="note" id="nightNote">毎晩2:43に自動で探して、上位を分解しています。</p>
+  <button class="btn sub" id="nightCut">チェックしたものを分解へ</button><button class="btn sub" id="nightCp">台帳用にコピー</button></div>
+  <div id="nightOut"></div>
+</section>
+
+<section id="find">
+  <div class="box">
+    <div><button class="btn sub" data-p="lol">LoLショート（日本語）</button><button class="btn sub" data-p="hist">英語・歴史／奇妙な話の長尺</button></div>
+    <label for="q">探す言葉（1行に1つ。全部まとめて探す）</label>
+    <textarea id="q" style="min-height:90px">japanese history documentary
+strange japan facts
+japan explained</textarea>
+    <div class="row">
+      <div><label for="lang">言語</label><select id="lang"><option value="en">英語</option><option value="ja">日本語</option><option value="">指定なし</option></select></div>
+      <div><label for="dur">長さ</label><select id="dur"><option value="long">長い（20分超）</option><option value="medium">中（4〜20分）</option><option value="short">短い（4分未満・ショート含む）</option><option value="any">指定なし</option></select></div>
+      <div><label for="days">何日以内に出た動画</label><input id="days" type="number" value="90" min="1"></div>
+      <div><label for="minr">登録者の何倍以上（チャンネル平均の3倍以上も拾う）</label><input id="minr" type="number" value="5" min="0" step="0.5"></div>
+    </div>
+    <button class="btn" id="go">外れ値を探す</button>
+    <button class="btn sub" id="toCut">チェックしたものを分解へ</button>
+    <button class="btn sub" id="cpHits">台帳用にコピー</button>
+    <div class="log" id="findLog"></div>
+  </div>
+  <div class="scroll"><table id="hits"></table></div>
+  <p class="note">外れ値＝登録者が少ないのに再生が多い動画。チャンネルの力ではなく「題材の力」で伸びた証拠。</p>
+</section>
+
+<section id="cut">
+  <div class="box">
+    <label for="urls">分解するYouTubeのURL（1行に1本・公開動画のみ）</label>
+    <textarea id="urls" placeholder="https://www.youtube.com/watch?v=..."></textarea>
+    <div class="row">
+      <div><label for="goal">何のための分解か（AIへの前提）</label><input id="goal" value="月30万円をYouTube広告で取るため。英語圏向けの長い動画とショートを作る"></div>
+      <div><label for="gap">1本ごとの待ち時間（秒）</label><input id="gap" type="number" value="6" min="0"></div>
+    </div>
+    <button class="btn" id="run">分解スタート</button>
+    <button class="btn sub" id="stop">止める</button>
+    <button class="btn sub" id="clear">結果を全部消す</button>
+    <div class="log" id="cutLog"></div>
+  </div>
+  <div id="cards"></div>
+</section>
+
+<section id="sum">
+  <div class="box">
+    <p class="note">分解した結果を全部まとめて、「伸びる理由」と「自分の動画に入れる型」にする。</p>
+    <button class="btn" id="mk">まとめを作る</button>
+    <button class="btn sub" id="cpSum">まとめをコピー</button>
+    <button class="btn sub" id="dl">全結果をファイルで保存</button>
+    <div class="log" id="sumLog"></div>
+  </div>
+  <pre id="sumOut">まだありません</pre>
+</section>
+</main>
+
+<script>
+{
+const $=s=>document.querySelector(s);
+const store={get(k,d){try{const v=localStorage.getItem('vbk_'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('vbk_'+k,JSON.stringify(v))}catch(e){}}};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const log=(el,t)=>{el.textContent+=t+'\n';el.scrollTop=el.scrollHeight};
+let KEY=store.get('key',''),MODEL=store.get('model',''),results=store.get('results',[]),hits=[],stopFlag=false;
+
+/* タブ */
+const tabs=[...document.querySelectorAll('nav button')];
+const show=t=>{tabs.forEach(b=>b.classList.toggle('on',b.dataset.t===t));document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id===t))};
+tabs.forEach(b=>b.onclick=()=>show(b.dataset.t));
+show(/^https?:/.test(location.protocol)?'night':(KEY?'cut':'key'));
+$('#k').value=KEY;
+const who=()=>{$('#who').textContent=KEY?('モデル: '+(MODEL||'自動')+' ／ 分解済み '+results.length+'本'):'キー未設定'};who();
+
+/* Gemini */
+const G='https://generativelanguage.googleapis.com/v1beta/';
+async function pickModel(){
+  const r=await fetch(G+'models?pageSize=200&key='+encodeURIComponent(KEY));
+  const j=await r.json();
+  if(!r.ok)throw new Error(j.error?.message||r.status);
+  const ok=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace('models/',''))
+    .filter(n=>/flash/.test(n)&&!/lite|image|tts|live|audio|embed|thinking-exp|8b/.test(n));
+  const ver=n=>{const m=n.match(/gemini-(\d+(?:\.\d+)?)/);return m?parseFloat(m[1]):0};
+  ok.sort((a,b)=>ver(b)-ver(a)||(/preview|exp/.test(a)?1:0)-(/preview|exp/.test(b)?1:0));
+  if(!ok.length)throw new Error('使えるFlashモデルが見つからない');
+  return ok[0];
+}
+async function gem(parts,json,low){
+  const body={contents:[{parts}],generationConfig:{temperature:0.4}};
+  if(json)body.generationConfig.responseMimeType='application/json';
+  if(low)body.generationConfig.mediaResolution='MEDIA_RESOLUTION_LOW';
+  for(let a=0;a<5;a++){
+    const r=await fetch(G+'models/'+MODEL+':generateContent?key='+encodeURIComponent(KEY),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const j=await r.json().catch(()=>({}));
+    if(r.ok){const t=(j.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('');if(!t)throw new Error('空の返事（'+(j.candidates?.[0]?.finishReason||'?')+'）');return t}
+    const msg=j.error?.message||('HTTP '+r.status);
+    if(r.status===400&&low&&/media_?resolution/i.test(msg)){delete body.generationConfig.mediaResolution;low=false;continue}
+    if(r.status===429||r.status>=500){await sleep(15000*(a+1));continue}
+    throw new Error(msg);
+  }
+  throw new Error('混んでいて5回失敗');
+}
+
+$('#saveKey').onclick=async()=>{
+  const el=$('#keyLog');el.textContent='';
+  KEY=$('#k').value.trim();store.set('key',KEY);
+  if(!KEY){log(el,'キーが空です');return}
+  try{MODEL=await pickModel();store.set('model',MODEL);log(el,'OK：'+MODEL+' を使います');who();show('cut')}
+  catch(e){log(el,'だめでした：'+e.message)}
+};
+
+/* 1 探す（YouTube Data API） */
+const Y='https://www.googleapis.com/youtube/v3/';
+async function yt(path,params){
+  const u=new URL(Y+path);Object.entries({...params,key:KEY}).forEach(([k,v])=>v!==''&&v!=null&&u.searchParams.set(k,v));
+  const r=await fetch(u);const j=await r.json();
+  if(!r.ok){const m=j.error?.message||r.status;if(/has not been used|disabled|accessNotConfigured/i.test(m))throw new Error('YouTube Data API v3 がまだ有効になっていません（キー画面のリンクから「有効にする」）');throw new Error(m)}
+  return j;
+}
+const secs=d=>{const m=String(d).match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)||[];return(+m[1]||0)*3600+(+m[2]||0)*60+(+m[3]||0)};
+const mmss=s=>s>=3600?Math.floor(s/3600)+':'+String(Math.floor(s%3600/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'):Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+const num=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(n);
+$('#go').onclick=async()=>{
+  const el=$('#findLog');el.textContent='';if(!KEY){show('key');return}
+  const qs=$('#q').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const after=new Date(Date.now()-(+$('#days').value||90)*864e5).toISOString();
+  const ids=new Set();$('#go').disabled=true;
+  try{
+    for(const q of qs){
+      log(el,'探し中：'+q);
+      const j=await yt('search',{part:'snippet',type:'video',q,maxResults:50,order:'viewCount',publishedAfter:after,videoDuration:$('#dur').value==='any'?'':$('#dur').value,relevanceLanguage:$('#lang').value});
+      (j.items||[]).forEach(i=>ids.add(i.id.videoId));
+    }
+    const all=[...ids],vids=[];
+    for(let i=0;i<all.length;i+=50){const j=await yt('videos',{part:'snippet,statistics,contentDetails',id:all.slice(i,i+50).join(',')});vids.push(...(j.items||[]))}
+    const chs=[...new Set(vids.map(v=>v.snippet.channelId))],subs={},avgv={};
+    for(let i=0;i<chs.length;i+=50){const j=await yt('channels',{part:'statistics',id:chs.slice(i,i+50).join(',')});(j.items||[]).forEach(c=>{subs[c.id]=+c.statistics.subscriberCount||0;avgv[c.id]=(+c.statistics.viewCount||0)/Math.max(+c.statistics.videoCount||1,1)})}
+    const minr=+$('#minr').value||0;
+    hits=vids.map(v=>{const views=+v.statistics.viewCount||0,s=subs[v.snippet.channelId]||0,days=Math.max(1,(Date.now()-new Date(v.snippet.publishedAt))/864e5);
+      return{id:v.id,title:v.snippet.title,ch:v.snippet.channelTitle,views,subs:s,ratio:views/Math.max(s,1),ravg:views/Math.max(avgv[v.snippet.channelId]||1,1),perDay:views/days,len:secs(v.contentDetails.duration)}})
+      .filter(h=>h.ratio>=minr||h.ravg>=3).sort((a,b)=>b.ravg-a.ravg||b.ratio-a.ratio);
+    log(el,'見つかった動画 '+vids.length+'本 → 外れ値 '+hits.length+'本');
+    drawHits();
+  }catch(e){log(el,'止まりました：'+e.message)}
+  $('#go').disabled=false;
+};
+function drawHits(){
+  $('#hits').innerHTML='<thead><tr><th></th><th>平均の何倍</th><th>登録者の何倍</th><th>動画</th><th>再生</th><th>登録者</th><th>1日あたり</th><th>長さ</th></tr></thead><tbody>'+
+  hits.map((h,i)=>`<tr><td><input type="checkbox" data-i="${i}" ${i<20?'checked':''} aria-label="選ぶ"></td><td class="n ratio">${h.ravg.toFixed(1)}倍</td><td class="n">${h.ratio.toFixed(1)}倍</td><td><a href="https://www.youtube.com/watch?v=${h.id}" target="_blank">${esc(h.title)}</a><div class="note">${esc(h.ch)}</div></td><td class="n">${num(h.views)}</td><td class="n">${num(h.subs)}</td><td class="n">${num(Math.round(h.perDay))}</td><td class="n">${mmss(h.len)}</td></tr>`).join('')+'</tbody>';
+}
+$('#toCut').onclick=()=>{
+  const pick=[...document.querySelectorAll('#hits input:checked')].map(c=>hits[+c.dataset.i]);
+  const have=new Set($('#urls').value.split('\n').map(s=>s.trim()));
+  const add=pick.map(h=>'https://www.youtube.com/watch?v='+h.id).filter(u=>!have.has(u));
+  $('#urls').value=($('#urls').value.trim()+'\n'+add.join('\n')).trim();
+  store.set('urls',$('#urls').value);
+  pick.forEach(h=>meta[h.id]=h);store.set('meta',meta);show('cut');
+};
+const PRE={
+  lol:{q:'LoL ショート\nリーグオブレジェンド 切り抜き\nLoL 初心者\nLoL ずんだもん\nロル 面白い',lang:'ja',dur:'short',days:60,minr:3},
+  hist:{q:'japanese history documentary\nstrange japan\ndark history japan\njapan mysteries\nhistory for sleep japan\nweird history',lang:'en',dur:'long',days:180,minr:5}};
+document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{const p=PRE[b.dataset.p];$('#q').value=p.q;$('#lang').value=p.lang;$('#dur').value=p.dur;$('#days').value=p.days;$('#minr').value=p.minr});
+$('#cpHits').onclick=async()=>{
+  const md='| 平均の何倍 | 登録者の何倍 | 再生 | 登録者 | 長さ | 動画 |\n|---|---|---|---|---|---|\n'+hits.slice(0,30).map(h=>`| ${h.ravg.toFixed(1)}倍 | ${h.ratio.toFixed(1)}倍 | ${num(h.views)} | ${num(h.subs)} | ${mmss(h.len)} | [${h.title.replace(/\|/g,'／')}](https://www.youtube.com/watch?v=${h.id}) ${h.ch.replace(/\|/g,'／')} |`).join('\n');
+  try{await navigator.clipboard.writeText(md);$('#findLog').textContent+='台帳用の表をコピーしました（Claudeに貼れば台帳に足します）\n'}catch(e){$('#findLog').textContent+='コピーできませんでした\n'}
+};
+let meta=store.get('meta',{});
+$('#urls').value=store.get('urls','');
+$('#urls').oninput=()=>store.set('urls',$('#urls').value);
+
+/* 2 分解 */
+const PROMPT=goal=>`あなたは再生回数を伸ばすYouTubeの編集者兼アナリスト。この動画を最初から最後まで見て分解する。
+前提：${goal}。目的は「なぜこの動画が見られたか」を真似できる型として取り出すこと（映像の再利用はしない）。
+推測は推測と書く。秒数は動画の実際の時刻で書く。日本語で、次のJSONだけを返す：
+{"title":"","lang":"","length_sec":0,"genre":"",
+"entry_emotion":"タップする直前の視聴者の気持ち（疲れている・暇・不安・好奇心など、状況込みで）",
+"title_thumb_promise":"タイトルとサムネが約束していること",
+"hook_0_3s":"最初の3秒に何が映り、何が聞こえるか",
+"hook_type":"問い/衝撃/結論先出し/謎/対立/数字 など",
+"first_30s":"30秒までに何を約束・回収しているか",
+"beats":[{"t":"0:00","what":"","why_keep_watching":""}],
+"avg_cut_sec":0,
+"on_screen_text":"テロップの量・位置・役割",
+"voice_music":"語り手（人/AI声）・話す速さ・BGM・効果音",
+"visual_source":"実写/素材/AI生成/画面録画/図 など",
+"retention_tricks":["途中で離脱させない工夫"],
+"ending":"終わり方（ループ・次の動画への誘導など）",
+"why_watched":["伸びた理由トップ3。題材の力か見せ方の力かも書く"],
+"steal_this":["自分の動画にそのまま入れられる型（映像ではなく構造）"],
+"ai_mass_risk":"AI量産判定に当たりそうな点と、この動画が避けている点",
+"foolishness":{"kind":"本物の失敗／言い訳・意地・逆恨み／知らない人の勘違い／自虐の一言／なし","where":"何秒に何が起きるか","real_or_staged":"本物か、作った失敗か（推測なら推測と書く）","competent_line":"失敗の理由を正確に言う『分かってる人の一言』があるか。あれば台詞","too_far":"嘘の失敗・毎回同じ演出・他人を晒して笑う、に当たるか"},
+"score":{"hook":0,"topic":0,"pacing":0,"fool":0}}
+scoreは各10点満点。foolは「人間の小ささ・本物の失敗」がどれだけ効いているか（0＝なし）。`;
+const vid=u=>(u.match(/(?:v=|youtu\.be\/|shorts\/)([\w-]{11})/)||[])[1];
+$('#run').onclick=async()=>{
+  const el=$('#cutLog');el.textContent='';if(!KEY){show('key');return}
+  if(!MODEL){try{MODEL=await pickModel();store.set('model',MODEL)}catch(e){log(el,'キーの確認でだめ：'+e.message);return}}
+  const done=new Set(results.map(r=>r.id));
+  const list=$('#urls').value.split('\n').map(s=>s.trim()).filter(Boolean).filter(u=>vid(u)&&!done.has(vid(u)));
+  stopFlag=false;$('#run').disabled=true;log(el,'これから '+list.length+'本（済みは飛ばす）');
+  for(const [i,u] of list.entries()){
+    if(stopFlag){log(el,'止めました');break}
+    const id=vid(u),m=meta[id];
+    log(el,`(${i+1}/${list.length}) 分解中… ${m?m.title:u}`);
+    try{
+      const t=await gem([{file_data:{file_uri:'https://www.youtube.com/watch?v='+id}},{text:PROMPT($('#goal').value)}],true,!m||m.len>600);
+      let d;try{d=JSON.parse(t.replace(/^```json|```$/g,''))}catch(e){d={raw:t}}
+      results.push({id,url:u,at:new Date().toISOString(),model:MODEL,meta:m||null,d});
+      store.set('results',results);drawCards();who();log(el,'  OK');
+    }catch(e){log(el,'  だめ：'+e.message)}
+    await sleep((+$('#gap').value||0)*1000);
+  }
+  $('#run').disabled=false;log(el,'終わり。「3 まとめ」へ');
+};
+$('#stop').onclick=()=>{stopFlag=true};
+$('#clear').onclick=()=>{if($('#clear').dataset.sure){results=[];store.set('results',results);drawCards();who();$('#clear').textContent='結果を全部消す';delete $('#clear').dataset.sure}else{$('#clear').dataset.sure=1;$('#clear').textContent='もう一度押すと消えます'}};
+const li=a=>Array.isArray(a)&&a.length?'<ul>'+a.map(x=>'<li>'+esc(typeof x==='string'?x:JSON.stringify(x))+'</li>').join('')+'</ul>':'';
+function drawCards(){
+  $('#cards').innerHTML=results.slice().reverse().map(r=>{const d=r.d||{},m=r.meta,s=d.score||{};
+    if(d.raw)return `<div class="box card"><h3>${esc(r.url)}</h3><pre>${esc(d.raw)}</pre></div>`;
+    return `<div class="box card"><h3><a href="${esc(r.url)}" target="_blank">${esc(d.title||r.url)}</a></h3>
+    ${m?`<span class="pill ratio">平均の${(m.ravg??m.ratio??0).toFixed(1)}倍</span><span class="pill">${num(m.views)}再生</span>`:''}<span class="pill">${esc(d.genre)}</span><span class="pill">フック${s.hook??'-'} 題材${s.topic??'-'} テンポ${s.pacing??'-'} 愚かさ${s.fool??'-'}</span><span class="pill">平均カット${esc(d.avg_cut_sec)}秒</span>
+    <div class="k">入口の気持ち</div>${esc(d.entry_emotion)}
+    <div class="k">最初の3秒</div>${esc(d.hook_0_3s)}（${esc(d.hook_type)}）
+    <div class="k">伸びた理由</div>${li(d.why_watched)}
+    <div class="k">盗める型</div>${li(d.steal_this)}
+    <div class="k">愚かさ</div>${esc(d.foolishness?.kind)}${d.foolishness?.where?'：'+esc(d.foolishness.where):''}${d.foolishness?.competent_line?'<br>分かってる人の一言：'+esc(d.foolishness.competent_line):''}
+    <div class="k">量産判定の危険</div><span class="bad">${esc(d.ai_mass_risk)}</span>
+    <details><summary class="note">全部見る</summary><pre>${esc(JSON.stringify(d,null,1))}</pre></details></div>`}).join('');
+}
+drawCards();
+
+/* 毎夜の外れ値（GitHub Pagesで開いたときだけ読める） */
+let night=null;
+async function loadNight(){
+  if(!/^https?:/.test(location.protocol)){$('#nightNote').textContent='PCのファイルで開いているので、毎夜の結果は見られません。スマホやWebの置き場から開くと見えます。';return}
+  try{
+    const [l,a]=await Promise.all([fetch('data/latest.json?t='+Date.now()).then(r=>r.ok?r.json():null),fetch('data/analysis.json?t='+Date.now()).then(r=>r.ok?r.json():{})]);
+    if(!l){$('#nightNote').textContent='まだ1回も動いていません（キーの登録待ち）';return}
+    night=l;let added=0;const have=new Set(results.map(r=>r.id));
+    Object.entries(a||{}).forEach(([id,x])=>{if(!have.has(id)){results.push({id,url:'https://www.youtube.com/watch?v='+id,at:x.at,model:x.model,meta:{...x.meta,ratio:x.meta.r_sub,ravg:x.meta.r_avg},d:x.d,night:true});added++}});
+    if(added){store.set('results',results);drawCards();who()}
+    $('#nightNote').textContent=l.date+' の結果。夜の分解 '+Object.keys(a||{}).length+'本は「2 分解」に入っています。';
+    $('#nightOut').innerHTML=Object.entries(l.presets).map(([k,p])=>`<h3>${esc(p.label)}${p.error?' <span class="bad">'+esc(p.error)+'</span>':'（'+(p.scanned||0)+'本から'+p.items.length+'本）'}</h3><div class="scroll"><table><thead><tr><th></th><th>平均の何倍</th><th>登録者の何倍</th><th>動画</th><th>再生</th><th>長さ</th></tr></thead><tbody>`+
+      p.items.map(h=>`<tr><td><input type="checkbox" data-n="${h.id}" aria-label="選ぶ"></td><td class="n ratio">${h.r_avg}倍</td><td class="n">${h.r_sub}倍</td><td>${h.new?'<span class="pill good">新</span>':''}${a&&a[h.id]?'<span class="pill">分解済み</span>':''}<a href="https://www.youtube.com/watch?v=${h.id}" target="_blank">${esc(h.title)}</a><div class="note">${esc(h.ch)}</div></td><td class="n">${num(h.views)}</td><td class="n">${mmss(h.len)}</td></tr>`).join('')+'</tbody></table></div>').join('');
+  }catch(e){$('#nightNote').textContent='読めませんでした：'+e.message}
+}
+loadNight();
+$('#nightCut').onclick=()=>{const ids=[...document.querySelectorAll('#nightOut input:checked')].map(c=>c.dataset.n);const have=new Set($('#urls').value.split('\n').map(s=>s.trim()));$('#urls').value=($('#urls').value.trim()+'\n'+ids.map(i=>'https://www.youtube.com/watch?v='+i).filter(u=>!have.has(u)).join('\n')).trim();store.set('urls',$('#urls').value);show('cut')};
+$('#nightCp').onclick=async()=>{if(!night)return;const md=Object.values(night.presets).map(p=>'## '+p.label+'\n| 平均の何倍 | 登録者の何倍 | 再生 | 長さ | 動画 |\n|---|---|---|---|---|\n'+p.items.slice(0,30).map(h=>`| ${h.r_avg}倍 | ${h.r_sub}倍 | ${num(h.views)} | ${mmss(h.len)} | [${h.title.replace(/\|/g,'／')}](https://www.youtube.com/watch?v=${h.id}) |`).join('\n')).join('\n\n');try{await navigator.clipboard.writeText(md);$('#nightNote').textContent='台帳用の表をコピーしました'}catch(e){$('#nightNote').textContent='コピーできませんでした'}};
+
+/* 3 まとめ */
+$('#mk').onclick=async()=>{
+  const el=$('#sumLog');el.textContent='';
+  if(results.length<2){log(el,'2本以上分解してから');return}
+  $('#mk').disabled=true;log(el,results.length+'本をまとめ中…');
+  const slim=results.map(r=>({title:r.d.title,ratio:r.meta?.ratio,views:r.meta?.views,len:r.d.length_sec,genre:r.d.genre,entry:r.d.entry_emotion,hook:r.d.hook_0_3s,hook_type:r.d.hook_type,cut:r.d.avg_cut_sec,text:r.d.on_screen_text,voice:r.d.voice_music,src:r.d.visual_source,tricks:r.d.retention_tricks,ending:r.d.ending,why:r.d.why_watched,steal:r.d.steal_this,risk:r.d.ai_mass_risk,fool:r.d.foolishness,fool_score:r.d.score?.fool}));
+  try{
+    const t=await gem([{text:`前提：${$('#goal').value}
+下は伸びた動画${slim.length}本の分解結果。共通点だけを数で数えて抜き出し、次の形で日本語で書く。見出しは結論を言い切る。推測には（推測）と付ける。
+1. 結論3行
+2. 勝ちパターン表（パターン｜何本に出たか｜例の動画名）
+3. タップされる入口の気持ち（多い順）
+4. 最初の3秒の型（多い順、具体的な台詞・画の例つき）
+5. テンポ（カット秒数の中央値と幅）
+6. 題材の力と見せ方の力、どちらで伸びたものが多いか
+7. 量産判定を避けている共通点
+8. 愚かさ（人間の小ささ・本物の失敗）：入っている本数、種類の内訳、愚かさの点数と再生倍率の関係、「分かってる人の一言」があるものとないものの差、やりすぎの例
+9. 次に作る1本の設計図（タイトル案3つ・最初の3秒・構成の秒割り・使う素材は自前か無料素材かAI生成のみ）
+データ：${JSON.stringify(slim)}`}],false,false);
+    $('#sumOut').textContent=t;store.set('sum',t);log(el,'できました');
+  }catch(e){log(el,'だめ：'+e.message)}
+  $('#mk').disabled=false;
+};
+$('#sumOut').textContent=store.get('sum','まだありません');
+$('#cpSum').onclick=async()=>{try{await navigator.clipboard.writeText($('#sumOut').textContent);$('#sumLog').textContent='コピーしました（Claudeのチャットに貼れば続きをやります）'}catch(e){$('#sumLog').textContent='コピーできませんでした。下の文字を選んでコピーしてください'}};
+$('#dl').onclick=()=>{const b=new Blob([JSON.stringify({results,sum:store.get('sum','')},null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='ぶんかい結果_'+new Date().toISOString().slice(0,10)+'.json';a.click()};
+}
+</script>
+</body>
+</html>
